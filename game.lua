@@ -32,117 +32,120 @@ local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory
 
 local function LoadEasyQuestion()
 
-	-- local file, errorString = io.open( filePath, "r+" )
 	local contents_all = {}
 	local contents = {}
 	local count = {} -- кол-во фильмов в файле
 	local str -- выбранная строка для работы
 	local i
 	local variant1_tmp, variant2_tmp, variant3_tmp
-	-- if file then
-		for line in io.lines(filePath) do
-			contents_all[#contents_all+ 1] = line
-		end
-		
-		for s, line in pairs( contents_all ) do
-			if (not line:match ("showed='easy2'")) and (not line:match ("showed='easy2_and_hard1'")) and (not line:match ("showed='easy2_and_hard2'")) then
-				contents[#contents+ 1] = line
-				count[#count+ 1] = s
-			else
-				-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
-				contents[#contents+ 1] = line
-				count[#count+ 1] = s
-			end
-		end
-	 
-		-- for k,v in pairs( contents_all ) do
-			-- print( "KEY: "..k.." | ".."VALUE: "..v )
-		-- end
-		
-		-- Выбираем один из доступных вариантов задания и отмечаем его показанным
-		-- В будущем можно усложнить шаблон, чтобы с приоритетом показывались фильмы, которых ещё не было видно
-		if contents ~= nil then
-			i = math.random(1,#contents)
-			str = contents[i]
-			print("Выбранная строка: "..str)
-			print("Номер строки в файле: "..count[i])
-			if str:match ("showed=''") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed=''", "showed='easy1'");
-			elseif str:match ("showed='easy1'") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1'", "showed='easy2'");
-			elseif str:match ("showed='hard1'") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed='hard1'", "showed='easy1_and_hard1'");
-			elseif str:match ("showed='hard2'") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed='hard2'", "showed='easy1_and_hard2'");
-			elseif str:match ("showed='easy1_and_hard1'") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard1'", "showed='easy2_and_hard1'");
-			elseif str:match ("showed='easy1_and_hard2'") then
-				contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard2'", "showed='easy2_and_hard2'");
-			end
-		end
-		
-		-- записываем в файл информацию о выбранном варианте
-		TableSave(contents_all,filePathLocal )
-		
-		--Выбираем 3 других неправильных варианта
-		--В будущем усложить и добавить корреляцию по жанрам, году
-		if contents_all ~= nil then
-			local v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
-			
-			-- Убедимся, что все варианты разные. Тут пиздец какой-то. Если будут лаги, то может быть из-за этого, я хз
-			while v1 == v2 or v1 == v3 or v2 == v3 or v1 == count[i] or v2 == count[i] or v3 == count[i] do
-				v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
-			end
-			variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
-			variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
-			variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
-			-- print("Вариант 1_tmp: "..variant1_tmp)
-			-- print("Вариант 2_tmp: "..variant2_tmp)
-			-- print("Вариант 3_tmp: "..variant3_tmp)
-		end
-		
-		if str ~= nil then
-			nameFilmTrue = string.match(str, "name_rus='(.-)'")
-			pictureFilmTrue = string.match(str, "img_easy='(.-)'")
-			if string.match (str, "showed='easy1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy1_and_hard2'") then
-				pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
-			else		
-				pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
-			end
-			pictureFilmTrue = "img/"..pictureFilmTrue
-			
-			if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
-				print("Название правильного фильма: "..nameFilmTrue)
-				print("Путь картинки правильного фильма: "..pictureFilmTrue)
-			else
-				print("Название правильного фильма: Что-то пошло не так")
-			end
-		end
-		
-		if math.random(1,4) == 1 then
-			variant1 = nameFilmTrue
-			variant2 = variant2_tmp
-			variant3 = variant3_tmp
-			variant4 = variant1_tmp
-		elseif math.random(1,3) == 1 then
-			variant1 = variant1_tmp
-			variant2 = nameFilmTrue
-			variant3 = variant3_tmp
-			variant4 = variant2_tmp
-		elseif math.random(1,2) == 1 then
-			variant1 = variant1_tmp
-			variant2 = variant2_tmp
-			variant3 = nameFilmTrue
-			variant4 = variant3_tmp
+	
+	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
+	local file, errorString = io.open( filePathLocal, "r+" )
+	if file then
+		filePath = filePathLocal
+		file:close()
+	end
+	
+	for line in io.lines(filePath) do
+		contents_all[#contents_all+ 1] = line
+	end
+	
+	for s, line in pairs( contents_all ) do
+		if (not line:match ("showed='easy2'")) and (not line:match ("showed='easy2_and_hard1'")) and (not line:match ("showed='easy2_and_hard2'")) then
+			contents[#contents+ 1] = line
+			count[#count+ 1] = s
 		else
-			variant1 = variant1_tmp
-			variant2 = variant2_tmp
-			variant3 = variant3_tmp
-			variant4 = nameFilmTrue
+			-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
+			contents[#contents+ 1] = line
+			count[#count+ 1] = s
 		end
-	-- else
-		-- print("Что-то пошло не так тут: "..errorString)
+	end
+	 
+	-- for k,v in pairs( contents_all ) do
+		-- print( "KEY: "..k.." | ".."VALUE: "..v )
 	-- end
+	
+	-- Выбираем один из доступных вариантов задания и отмечаем его показанным
+	-- В будущем можно усложнить шаблон, чтобы с приоритетом показывались фильмы, которых ещё не было видно
+	if contents ~= nil then
+		i = math.random(1,#contents)
+		str = contents[i]
+		print("Выбранная строка: "..str)
+		print("Номер строки в файле: "..count[i])
+		if str:match ("showed=''") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed=''", "showed='easy1'");
+		elseif str:match ("showed='easy1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1'", "showed='easy2'");
+		elseif str:match ("showed='hard1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='hard1'", "showed='easy1_and_hard1'");
+		elseif str:match ("showed='hard2'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='hard2'", "showed='easy1_and_hard2'");
+		elseif str:match ("showed='easy1_and_hard1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard1'", "showed='easy2_and_hard1'");
+		elseif str:match ("showed='easy1_and_hard2'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard2'", "showed='easy2_and_hard2'");
+		end
+	end
+	
+	-- записываем в файл информацию о выбранном варианте
+	TableSave(contents_all,filePathLocal )
+	
+	--Выбираем 3 других неправильных варианта
+	--В будущем усложить и добавить корреляцию по жанрам, году
+	if contents_all ~= nil then
+		local v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
+		
+		-- Убедимся, что все варианты разные. Тут пиздец какой-то. Если будут лаги, то может быть из-за этого, я хз
+		while v1 == v2 or v1 == v3 or v2 == v3 or v1 == count[i] or v2 == count[i] or v3 == count[i] do
+			v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
+		end
+		variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
+		variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
+		variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
+		-- print("Вариант 1_tmp: "..variant1_tmp)
+		-- print("Вариант 2_tmp: "..variant2_tmp)
+		-- print("Вариант 3_tmp: "..variant3_tmp)
+	end
+	
+	if str ~= nil then
+		nameFilmTrue = string.match(str, "name_rus='(.-)'")
+		pictureFilmTrue = string.match(str, "img_easy='(.-)'")
+		if string.match (str, "showed='easy1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy1_and_hard2'") then
+			pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+		else		
+			pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+		end
+		pictureFilmTrue = "img/"..pictureFilmTrue
+		
+		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
+			print("Название правильного фильма: "..nameFilmTrue)
+			print("Путь картинки правильного фильма: "..pictureFilmTrue)
+		else
+			print("Название правильного фильма: Что-то пошло не так")
+		end
+	end
+	
+	if math.random(1,4) == 1 then
+		variant1 = nameFilmTrue
+		variant2 = variant2_tmp
+		variant3 = variant3_tmp
+		variant4 = variant1_tmp
+	elseif math.random(1,3) == 1 then
+		variant1 = variant1_tmp
+		variant2 = nameFilmTrue
+		variant3 = variant3_tmp
+		variant4 = variant2_tmp
+	elseif math.random(1,2) == 1 then
+		variant1 = variant1_tmp
+		variant2 = variant2_tmp
+		variant3 = nameFilmTrue
+		variant4 = variant3_tmp
+	else
+		variant1 = variant1_tmp
+		variant2 = variant2_tmp
+		variant3 = variant3_tmp
+		variant4 = nameFilmTrue
+	end
 end
 
 local function exportstring( s )
