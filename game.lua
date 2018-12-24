@@ -26,7 +26,9 @@ local function updateText()
     scoreText.text = "Score: " .. score
 end
 
-local filePath = system.pathForFile ("films.xml", system.DocumentsDirectory)
+local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
+local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
+
 
 local function LoadEasyQuestion()
 
@@ -80,7 +82,7 @@ local function LoadEasyQuestion()
 		end
 		
 		-- записываем в файл информацию о выбранном варианте
-		TableSave(contents_all,filePath )
+		TableSave(contents_all,filePathLocal )
 		
 		--Выбираем 3 других неправильных варианта
 		--В будущем усложить и добавить корреляцию по жанрам, году
