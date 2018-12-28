@@ -1,5 +1,6 @@
 
 local composer = require( "composer" )
+local widget = require( "widget" )
 
 local scene = composer.newScene()
 
@@ -29,6 +30,124 @@ end
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
 
+local function LoadHardQuestion()
+
+	local contents_all = {}
+	local contents = {}
+	local count = {} -- кол-во фильмов в файле
+	local str -- выбранная строка для работы
+	local i
+	local variant1_tmp, variant2_tmp, variant3_tmp
+	
+	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
+	local file, errorString = io.open( filePathLocal, "rb" )
+	if file then
+		filePath = filePathLocal
+		file:close()
+	end
+	
+	for line in io.lines(filePath) do
+		contents_all[#contents_all+ 1] = line
+	end
+	
+	for s, line in pairs( contents_all ) do
+		if (not line:match ("showed='hard2'")) and (not line:match ("showed='easy1_and_hard2'")) and (not line:match ("showed='easy2_and_hard2'")) then
+			contents[#contents+ 1] = line
+			count[#count+ 1] = s
+		else
+			-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
+			contents[#contents+ 1] = line
+			count[#count+ 1] = s
+		end
+	end
+	 
+	-- for k,v in pairs( contents_all ) do
+		-- print( "KEY: "..k.." | ".."VALUE: "..v )
+	-- end
+	
+	-- Выбираем один из доступных вариантов задания и отмечаем его показанным
+	-- В будущем можно усложнить шаблон, чтобы с приоритетом показывались фильмы, которых ещё не было видно
+	if contents ~= nil then
+		i = math.random(1,#contents)
+		str = contents[i]
+		print("Выбранная строка: "..str)
+		print("Номер строки в файле: "..count[i])
+		if str:match ("showed=''") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed=''", "showed='hard1'");
+		elseif str:match ("showed='easy1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1'", "showed='easy1_and_hard1'");
+		elseif str:match ("showed='hard1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='hard1'", "showed='hard2'");
+		elseif str:match ("showed='easy2'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy2'", "showed='easy2_and_hard1'");
+		elseif str:match ("showed='easy1_and_hard1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard1'", "showed='easy1_and_hard2'");
+		elseif str:match ("showed='easy2_and_hard1'") then
+			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard2'", "showed='easy2_and_hard2'");
+		end
+	end
+	
+	-- записываем в файл информацию о выбранном варианте
+	TableSave(contents_all,filePathLocal )
+	
+	--Выбираем 3 других неправильных варианта
+	--В будущем усложить и добавить корреляцию по жанрам, году
+	if contents_all ~= nil then
+		local v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
+		
+		-- Убедимся, что все варианты разные. Тут пиздец какой-то. Если будут лаги, то может быть из-за этого, я хз
+		while v1 == v2 or v1 == v3 or v2 == v3 or v1 == count[i] or v2 == count[i] or v3 == count[i] do
+			v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
+		end
+		variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
+		variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
+		variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
+		-- print("Вариант 1_tmp: "..variant1_tmp)
+		-- print("Вариант 2_tmp: "..variant2_tmp)
+		-- print("Вариант 3_tmp: "..variant3_tmp)
+	end
+	
+	if str ~= nil then
+		nameFilmTrue = string.match(str, "name_rus='(.-)'")
+		pictureFilmTrue = string.match(str, "img_hard='(.-)'")
+		if string.match (str, "showed='hard1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy2_and_hard1'") then
+			pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+		else		
+			pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+		end
+		pictureFilmTrue = "img/"..pictureFilmTrue
+		
+		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
+			print("Название правильного фильма: "..nameFilmTrue)
+			print("Путь сложной картинки: "..pictureFilmTrue)
+		else
+			print("Название правильного фильма: Что-то пошло не так")
+		end
+	end
+	
+	if math.random(1,4) == 1 then
+		variant1 = nameFilmTrue
+		variant2 = variant2_tmp
+		variant3 = variant3_tmp
+		variant4 = variant1_tmp
+	elseif math.random(1,3) == 1 then
+		variant1 = variant1_tmp
+		variant2 = nameFilmTrue
+		variant3 = variant3_tmp
+		variant4 = variant2_tmp
+	elseif math.random(1,2) == 1 then
+		variant1 = variant1_tmp
+		variant2 = variant2_tmp
+		variant3 = nameFilmTrue
+		variant4 = variant3_tmp
+	else
+		variant1 = variant1_tmp
+		variant2 = variant2_tmp
+		variant3 = variant3_tmp
+		variant4 = nameFilmTrue
+	end
+end
+
 
 local function LoadEasyQuestion()
 
@@ -40,7 +159,7 @@ local function LoadEasyQuestion()
 	local variant1_tmp, variant2_tmp, variant3_tmp
 	
 	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
-	local file, errorString = io.open( filePathLocal, "r+" )
+	local file, errorString = io.open( filePathLocal, "rb" )
 	if file then
 		filePath = filePathLocal
 		file:close()
@@ -119,7 +238,7 @@ local function LoadEasyQuestion()
 		
 		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
 			print("Название правильного фильма: "..nameFilmTrue)
-			print("Путь картинки правильного фильма: "..pictureFilmTrue)
+			print("Путь простой картинки: "..pictureFilmTrue)
 		else
 			print("Название правильного фильма: Что-то пошло не так")
 		end
@@ -244,6 +363,25 @@ local function SplitLongString(stringName)
 	return stringNameMod
 end
 
+local function ChooseSize(stringName)
+	local size = 40
+	if string.len(stringName) > 54 then
+		size = 15
+	elseif string.len(stringName) > 40 then
+		size = 20
+	elseif string.len(stringName) > 30 then
+		size = 25
+	elseif string.len(stringName) > 20 then
+		size = 30
+	elseif string.len(stringName) > 10 then
+		size = 35
+	else
+		size = 40
+	end	
+	print( 'Размер текста "'..stringName..'" - '..size )
+	return size
+end
+
 local function endGame()
 	print( "Неправильно!")
 	composer.setVariable( "finalScore", score )
@@ -258,25 +396,50 @@ local function continueGame()
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
 
--- Обработка нажатия на вариант ответа
-local function onObjectTouch( self, event )
-    if ( event.phase == "began" ) then
-		self:setFillColor( 0.8, 0.1, 0.1 )
-	elseif ( event.phase == "moved" ) then
-		self:setFillColor( 0.2, 0.8, 0.1 )
-	elseif ( event.phase == "ended" or event.phase == "cancelled" ) then
-        print( "Touch event ended on: " .. self.id )
-		self:setFillColor( 0.2, 0.8, 0.1 )
-		if self.text == nameFilmTrue and nameFilmTrue ~= nil then
+local function handleButtonEvent1( event )
+    if ( "ended" == event.phase ) then
+        print( "Button was pressed and released " )
+		if variant1 == nameFilmTrue and nameFilmTrue ~= nil then
 			score = score+1
 			continueGame()
 		else
 			endGame()
 		end
     end
-    return true
 end
-
+local function handleButtonEvent2( event )
+    if ( "ended" == event.phase ) then
+        print( "Button was pressed and released " )
+		if variant2 == nameFilmTrue and nameFilmTrue ~= nil then
+			score = score+1
+			continueGame()
+		else
+			endGame()
+		end
+    end
+end
+local function handleButtonEvent3( event )
+    if ( "ended" == event.phase ) then
+        print( "Button was pressed and released " )
+		if variant3 == nameFilmTrue and nameFilmTrue ~= nil then
+			score = score+1
+			continueGame()
+		else
+			endGame()
+		end
+    end
+end
+local function handleButtonEvent4( event )
+    if ( "ended" == event.phase ) then
+        print( "Button was pressed and released " )
+		if variant4 == nameFilmTrue and nameFilmTrue ~= nil then
+			score = score+1
+			continueGame()
+		else
+			endGame()
+		end
+    end
+end
 
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
@@ -290,7 +453,11 @@ function scene:create( event )
 		score = composer.getVariable( "finalScore" )
 	end
 	
-	LoadEasyQuestion()
+	if math.random(1,4) > 1 then
+		LoadEasyQuestion()
+	else
+		LoadHardQuestion()
+	end
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth, display.contentHeight )
 	background.x = display.contentCenterX
@@ -302,33 +469,101 @@ function scene:create( event )
 
 	scoreText = display.newText( sceneGroup, "Score: " .. score, 100, 0, native.systemFont, 36 )
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
-		local variant1Button = display.newText( sceneGroup, variant1, display.contentCenterX/2, display.contentCenterY*1.5, native.systemFont, 40 )
-		variant1Button:setFillColor( 0.2, 0.8, 0.1 )
+		-- local variant1Button = display.newText( sceneGroup, variant1, display.contentCenterX/2, display.contentCenterY*1.5, native.systemFont, 40 )
+		-- variant1Button:setFillColor( 0.2, 0.8, 0.1 )		
+		-- local variant2Button = display.newText( sceneGroup, variant2, display.contentCenterX*1.5, display.contentCenterY*1.5, native.systemFont, 40 )
+		-- variant2Button:setFillColor( 0.2, 0.8, 0.1 )
+		-- local variant3Button = display.newText( sceneGroup, variant3, display.contentCenterX/2, (display.contentCenterY*1.5+128), native.systemFont, 40 )
+		-- variant3Button:setFillColor( 0.2, 0.8, 0.1 )		
+		-- local variant4Button = display.newText( sceneGroup, variant4, display.contentCenterX*1.5, (display.contentCenterY*1.5+128), native.systemFont, 40 )
+		-- variant4Button:setFillColor( 0.2, 0.8, 0.1 )
 		
-		local variant2Button = display.newText( sceneGroup, variant2, display.contentCenterX*1.5, display.contentCenterY*1.5, native.systemFont, 40 )
-		variant2Button:setFillColor( 0.2, 0.8, 0.1 )
-
-		local variant3Button = display.newText( sceneGroup, variant3, display.contentCenterX/2, (display.contentCenterY*1.5+128), native.systemFont, 40 )
-		variant3Button:setFillColor( 0.2, 0.8, 0.1 )
 		
-		local variant4Button = display.newText( sceneGroup, variant4, display.contentCenterX*1.5, (display.contentCenterY*1.5+128), native.systemFont, 40 )
-		variant4Button:setFillColor( 0.2, 0.8, 0.1 )
+		local variant1Button = widget.newButton(
+			{
+				left = 20,
+				top = display.contentCenterY*1.3,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_free.png",
+				overFile = "img/button_touch.png",
+				id = "variant1Button",
+				label = variant1,
+				font = native.systemFontBold,
+				fontSize = ChooseSize(variant1),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				onEvent = handleButtonEvent1
+			}
+		)
+		local variant2Button = widget.newButton(
+			{
+				left = display.contentCenterX+10,
+				top = display.contentCenterY*1.3,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_free.png",
+				overFile = "img/button_touch.png",
+				id = "variant2Button",
+				label = variant2,
+				font = native.systemFontBold,
+				fontSize = ChooseSize(variant2),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				onEvent = handleButtonEvent2
+			}
+		)
+		local variant3Button = widget.newButton(
+			{
+				left = 20,
+				top = display.contentCenterY*1.3+140,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_free.png",
+				overFile = "img/button_touch.png",
+				id = "variant3Button",
+				label = variant3,
+				font = native.systemFontBold,
+				fontSize = ChooseSize(variant3),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				onEvent = handleButtonEvent3
+			}
+		)
+		local variant4Button = widget.newButton(
+			{
+				left = display.contentCenterX+10,
+				top = display.contentCenterY*1.3+140,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_free.png",
+				overFile = "img/button_touch.png",
+				id = "variant4Button",
+				label = variant4,
+				font = native.systemFontBold,
+				fontSize = ChooseSize(variant4),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				onEvent = handleButtonEvent4
+			}
+		)
+		-- привязываем кнопку к сцене
+		sceneGroup:insert( variant1Button )
+		sceneGroup:insert( variant2Button )
+		sceneGroup:insert( variant3Button )
+		sceneGroup:insert( variant4Button )
 		print("Вариант 1: "..variant1)
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
-		variant1Button.touch = onObjectTouch
-		variant1Button.id = "Вариант 1: "..variant1
-		variant2Button.touch = onObjectTouch
-		variant2Button.id = "Вариант 2: "..variant1
-		variant3Button.touch = onObjectTouch
-		variant3Button.id = "Вариант 3: "..variant1
-		variant4Button.touch = onObjectTouch
-		variant4Button.id = "Вариант 4: "..variant1
-		variant1Button:addEventListener( "touch", variant1Button )
-		variant2Button:addEventListener( "touch", variant2Button )
-		variant3Button:addEventListener( "touch", variant3Button )
-		variant4Button:addEventListener( "touch", variant4Button )
+		-- variant1Button.touch = handleButtonEvent
+		-- variant1Button.id = "Вариант 1: "..variant1
+		-- variant2Button.touch = handleButtonEvent
+		-- variant2Button.id = "Вариант 2: "..variant1
+		-- variant3Button.touch = handleButtonEvent
+		-- variant3Button.id = "Вариант 3: "..variant1
+		-- variant4Button.touch = handleButtonEvent
+		-- variant4Button.id = "Вариант 4: "..variant1
+		-- variant1Button:addEventListener( "touch", variant1Button )
+		-- variant2Button:addEventListener( "touch", variant2Button )
+		-- variant3Button:addEventListener( "touch", variant3Button )
+		-- variant4Button:addEventListener( "touch", variant4Button )
 	end
 end
 
