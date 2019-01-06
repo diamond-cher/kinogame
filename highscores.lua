@@ -1,5 +1,6 @@
 
 local composer = require( "composer" )
+local widget = require( "widget" )
 
 local scene = composer.newScene()
 
@@ -46,11 +47,11 @@ local function saveScores()
 	end
 end
 
-
-local function gotoMenu()
-	composer.gotoScene( "menu", { time=800, effect="crossFade" } )
+local function gotoMenu( event )
+    if ( "ended" == event.phase ) then
+		composer.gotoScene( "menu" )
+    end
 end
-
 
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
@@ -60,20 +61,30 @@ end
 function scene:create( event )
 
     local sceneGroup = self.view
+	local finalScore = composer.getVariable( "finalScore" )
+	local j -- место, куда вставили новый рекорд игрока
     -- Code here runs when the scene is first created but has not yet appeared on screen
 
     -- Load the previous scores
     loadScores()
 
     -- Insert the saved score from the last game into the table, then reset it
-    table.insert( scoresTable, composer.getVariable( "finalScore" ) )
-    composer.setVariable( "finalScore", 0 )
+	if finalScore and finalScore ~= 0 then
+		for i=1,#scoresTable,1 do
+			if finalScore >= scoresTable[i] then
+				table.insert( scoresTable, i, finalScore )
+				j = i
+				break
+			end
+		end
+	end
+	composer.setVariable( "finalScore", 0 )
 
     -- Sort the table entries from highest to lowest
-    local function compare( a, b )
-        return a > b
-    end
-    table.sort( scoresTable, compare )
+    -- local function compare( a, b )
+        -- return a > b
+    -- end
+    -- table.sort( scoresTable, compare )
 
     -- Save the scores
     saveScores()
@@ -82,24 +93,44 @@ function scene:create( event )
     background.x = display.contentCenterX
     background.y = display.contentCenterY
 
-    local highScoresHeader = display.newText( sceneGroup, "High Scores", display.contentCenterX, 100, native.systemFont, 44 )
+    local highScoresHeader = display.newText( sceneGroup, "Таблица рекордов", display.contentCenterX, 100, native.systemFont, 64 )
+	highScoresHeader:setFillColor( 0, 0, 0 )
 
     for i = 1, 10 do
         if ( scoresTable[i] ) then
-            local yPos = 150 + ( i * 56 )
+            local yPos = 150 + ( i * 76 )
 
-            local rankNum = display.newText( sceneGroup, i .. ")", display.contentCenterX-50, yPos, native.systemFont, 36 )
-            rankNum:setFillColor( 0.8 )
+            local rankNum = display.newText( sceneGroup, i .. ")", display.contentCenterX-50, yPos, native.systemBolt, 54 )
+            rankNum:setFillColor( 0, 0, 0 )
             rankNum.anchorX = 1
 
-            local thisScore = display.newText( sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, native.systemFont, 36 )
+            local thisScore = display.newText( sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, native.systemFont, 54 )
+			if i == j then
+				thisScore:setFillColor( 1, 0, 0 )
+			else
+				thisScore:setFillColor( 0, 0, 0 )
+			end
             thisScore.anchorX = 0
         end
     end
 
-	local menuButton = display.newText( sceneGroup, "Menu", display.contentCenterX, (display.contentCenterY*1.5+128), native.systemFont, 64 )
-	menuButton:setFillColor( 0.2, 0.8, 0.1 )
-    menuButton:addEventListener( "tap", gotoMenu )
+	local menuButton = widget.newButton(
+			{
+				x = display.contentCenterX,
+				y = display.contentCenterY*1.5+128,
+				width = display.contentCenterX,
+				height = 120,
+				defaultFile = "img/button_free.png",
+				overFile = "img/button_touch.png",
+				id = "highScoresButton",
+				label = "Меню",
+				font = native.systemFontBold,
+				fontSize = 64,
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				onEvent = gotoMenu
+			}
+		)
+	sceneGroup:insert( menuButton )
 end
 
 

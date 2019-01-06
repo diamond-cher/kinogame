@@ -348,16 +348,18 @@ end
 
 local function ChooseSize(stringName)
 	local size = 40
-	if string.len(stringName) > 54 then
-		size = 15
-	elseif string.len(stringName) > 40 then
+	if string.len(stringName) > 52 then
+		size = 16
+	elseif string.len(stringName) > 44 then
 		size = 20
+	elseif string.len(stringName) > 40 then
+		size = 23
 	elseif string.len(stringName) > 30 then
-		size = 25
+		size = 28
 	elseif string.len(stringName) > 20 then
-		size = 30
+		size = 33
 	elseif string.len(stringName) > 10 then
-		size = 35
+		size = 38
 	else
 		size = 40
 	end	
@@ -424,6 +426,10 @@ local function handleButtonEvent4( event )
     end
 end
 
+local function cheatButton( event )
+    score = score+1
+end
+
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -436,33 +442,32 @@ function scene:create( event )
 		score = composer.getVariable( "finalScore" )
 	end
 	
+	
 	LoadQuestion()
 	
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth, display.contentHeight )
 	background.x = display.contentCenterX
 	background.y = display.contentCenterY
+	
+	local pictureFilm
+	-- Проверяем, чтобы картинка у фильма была, иначе ищем другой фильм
+	repeat
+		pictureFilm = display.newImageRect( sceneGroup, pictureFilmTrue, display.contentWidth, display.contentCenterY-50 )
+		if not pictureFilm then
+			LoadQuestion()
+		end
+	until pictureFilm
+	pictureFilm.x = display.contentCenterX
+	pictureFilm.y = display.contentCenterY/2+130
 
-	local title = display.newImageRect( sceneGroup, pictureFilmTrue, display.contentWidth, display.contentCenterY-50 )
-	title.x = display.contentCenterX
-	title.y = display.contentCenterY/2+50
-
-	scoreText = display.newText( sceneGroup, "Score: " .. score, 100, 0, native.systemFont, 36 )
+	scoreText = display.newText( sceneGroup, "Score: " .. score, 100, 100, native.systemFont, 48 )
+	scoreText:setFillColor( 0, 0, 0 )
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
-		-- local variant1Button = display.newText( sceneGroup, variant1, display.contentCenterX/2, display.contentCenterY*1.5, native.systemFont, 40 )
-		-- variant1Button:setFillColor( 0.2, 0.8, 0.1 )		
-		-- local variant2Button = display.newText( sceneGroup, variant2, display.contentCenterX*1.5, display.contentCenterY*1.5, native.systemFont, 40 )
-		-- variant2Button:setFillColor( 0.2, 0.8, 0.1 )
-		-- local variant3Button = display.newText( sceneGroup, variant3, display.contentCenterX/2, (display.contentCenterY*1.5+128), native.systemFont, 40 )
-		-- variant3Button:setFillColor( 0.2, 0.8, 0.1 )		
-		-- local variant4Button = display.newText( sceneGroup, variant4, display.contentCenterX*1.5, (display.contentCenterY*1.5+128), native.systemFont, 40 )
-		-- variant4Button:setFillColor( 0.2, 0.8, 0.1 )
-		
-		
 		local variant1Button = widget.newButton(
 			{
 				left = 20,
-				top = display.contentCenterY*1.3,
+				top = display.contentCenterY*1.5,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -478,7 +483,7 @@ function scene:create( event )
 		local variant2Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
-				top = display.contentCenterY*1.3,
+				top = display.contentCenterY*1.5,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -494,7 +499,7 @@ function scene:create( event )
 		local variant3Button = widget.newButton(
 			{
 				left = 20,
-				top = display.contentCenterY*1.3+140,
+				top = display.contentCenterY*1.5+140,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -510,7 +515,7 @@ function scene:create( event )
 		local variant4Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
-				top = display.contentCenterY*1.3+140,
+				top = display.contentCenterY*1.5+140,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -532,6 +537,8 @@ function scene:create( event )
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
+		
+		scoreText:addEventListener( "tap", cheatButton )
 		-- variant1Button.touch = handleButtonEvent
 		-- variant1Button.id = "Вариант 1: "..variant1
 		-- variant2Button.touch = handleButtonEvent
