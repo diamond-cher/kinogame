@@ -16,6 +16,11 @@ local variant2 = "Вариант 2"
 local variant3 = "Вариант 3"
 local variant4 = "Вариант 4"
 
+-- переменны для отлова повторов
+local replay
+local replay_table = {}
+local replay_tablePath = system.pathForFile( "replay_table.xml", system.DocumentsDirectory )
+
 -- Initialize variables
 local score = 0
 local lose = false
@@ -30,7 +35,7 @@ end
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
 
-local function LoadHardQuestion()
+local function LoadQuestion()
 
 	local contents_all = {}
 	local contents = {}
@@ -38,6 +43,7 @@ local function LoadHardQuestion()
 	local str -- выбранная строка для работы
 	local i
 	local variant1_tmp, variant2_tmp, variant3_tmp
+	local complexity
 	
 	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
 	local file, errorString = io.open( filePathLocal, "rb" )
@@ -50,26 +56,66 @@ local function LoadHardQuestion()
 		contents_all[#contents_all+ 1] = line
 	end
 	
-	for s, line in pairs( contents_all ) do
-		if (not line:match ("showed='hard2'")) and (not line:match ("showed='easy1_and_hard2'")) and (not line:match ("showed='easy2_and_hard2'")) then
-			contents[#contents+ 1] = line
-			count[#count+ 1] = s
-		else
-			-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
-			contents[#contents+ 1] = line
-			count[#count+ 1] = s
+	LoadReplayFile()
+	
+	-- определяем сложность скриншота
+	if math.random(1,4) > 1 then
+		complexity = "easy"
+		print("Выбранная сложность - "..complexity)
+	else
+		complexity = "hard"
+		print("Выбранная сложность - "..complexity)
+	end
+	
+	if complexity == "hard" then
+		for s, line in pairs( contents_all ) do
+			if (not line:match ("showed='hard2'")) and (not line:match ("showed='easy1_and_hard2'")) and (not line:match ("showed='easy2_and_hard2'")) then
+				contents[#contents+ 1] = line
+				count[#count+ 1] = s
+			else
+				-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
+				contents[#contents+ 1] = line
+				count[#count+ 1] = s
+			end
+		end
+	elseif complexity == "easy" then
+		for s, line in pairs( contents_all ) do
+			if (not line:match ("showed='easy2'")) and (not line:match ("showed='easy2_and_hard1'")) and (not line:match ("showed='easy2_and_hard2'")) then
+				contents[#contents+ 1] = line
+				count[#count+ 1] = s
+			else
+				-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
+				contents[#contents+ 1] = line
+				count[#count+ 1] = s
+			end
 		end
 	end
-	 
-	-- for k,v in pairs( contents_all ) do
-		-- print( "KEY: "..k.." | ".."VALUE: "..v )
-	-- end
 	
-	-- Выбираем один из доступных вариантов задания и отмечаем его показанным
-	-- В будущем можно усложнить шаблон, чтобы с приоритетом показывались фильмы, которых ещё не было видно
-	if contents ~= nil then
+	-- Выбираем один из доступных вариантов задания, проверяем, не показывали ли мы его недавно, и вносим его в таблицу повторов
+	replay = true
+	while replay == true do
 		i = math.random(1,#contents)
 		str = contents[i]
+		nameFilmTrue = string.match(str, "name_rus='(.-)'")			
+		if replay_table ~= {} and #replay_table>0 then
+			for j=1,#replay_table do
+				if nameFilmTrue == replay_table[j] then
+					replay = true
+					break
+				else
+					replay = false
+				end
+			end
+		else
+			replay = false
+		end
+		if replay == false then
+			table.insert( replay_table, 1, nameFilmTrue )
+		end
+	end
+	
+	-- Отмечаем, что показали выбранный фильм в очередной раз
+	if complexity == "hard" then
 		print("Выбранная строка: "..str)
 		print("Номер строки в файле: "..count[i])
 		if str:match ("showed=''") then
@@ -85,110 +131,7 @@ local function LoadHardQuestion()
 		elseif str:match ("showed='easy2_and_hard1'") then
 			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard2'", "showed='easy2_and_hard2'");
 		end
-	end
-	
-	-- записываем в файл информацию о выбранном варианте
-	TableSave(contents_all,filePathLocal )
-	
-	--Выбираем 3 других неправильных варианта
-	--В будущем усложить и добавить корреляцию по жанрам, году
-	if contents_all ~= nil then
-		local v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
-		
-		-- Убедимся, что все варианты разные. Тут пиздец какой-то. Если будут лаги, то может быть из-за этого, я хз
-		while v1 == v2 or v1 == v3 or v2 == v3 or v1 == count[i] or v2 == count[i] or v3 == count[i] do
-			v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
-		end
-		variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
-		variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
-		variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
-		-- print("Вариант 1_tmp: "..variant1_tmp)
-		-- print("Вариант 2_tmp: "..variant2_tmp)
-		-- print("Вариант 3_tmp: "..variant3_tmp)
-	end
-	
-	if str ~= nil then
-		nameFilmTrue = string.match(str, "name_rus='(.-)'")
-		pictureFilmTrue = string.match(str, "img_hard='(.-)'")
-		if string.match (str, "showed='hard1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy2_and_hard1'") then
-			pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
-		else		
-			pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
-		end
-		pictureFilmTrue = "img/"..pictureFilmTrue
-		
-		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
-			print("Название правильного фильма: "..nameFilmTrue)
-			print("Путь сложной картинки: "..pictureFilmTrue)
-		else
-			print("Название правильного фильма: Что-то пошло не так")
-		end
-	end
-	
-	if math.random(1,4) == 1 then
-		variant1 = nameFilmTrue
-		variant2 = variant2_tmp
-		variant3 = variant3_tmp
-		variant4 = variant1_tmp
-	elseif math.random(1,3) == 1 then
-		variant1 = variant1_tmp
-		variant2 = nameFilmTrue
-		variant3 = variant3_tmp
-		variant4 = variant2_tmp
-	elseif math.random(1,2) == 1 then
-		variant1 = variant1_tmp
-		variant2 = variant2_tmp
-		variant3 = nameFilmTrue
-		variant4 = variant3_tmp
-	else
-		variant1 = variant1_tmp
-		variant2 = variant2_tmp
-		variant3 = variant3_tmp
-		variant4 = nameFilmTrue
-	end
-end
-
-
-local function LoadEasyQuestion()
-
-	local contents_all = {}
-	local contents = {}
-	local count = {} -- кол-во фильмов в файле
-	local str -- выбранная строка для работы
-	local i
-	local variant1_tmp, variant2_tmp, variant3_tmp
-	
-	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
-	local file, errorString = io.open( filePathLocal, "rb" )
-	if file then
-		filePath = filePathLocal
-		file:close()
-	end
-	
-	for line in io.lines(filePath) do
-		contents_all[#contents_all+ 1] = line
-	end
-	
-	for s, line in pairs( contents_all ) do
-		if (not line:match ("showed='easy2'")) and (not line:match ("showed='easy2_and_hard1'")) and (not line:match ("showed='easy2_and_hard2'")) then
-			contents[#contents+ 1] = line
-			count[#count+ 1] = s
-		else
-			-- тут надо придумать, что делаем когда все фильмы закончились. Сейчас просто показываем всё по второму кругу
-			contents[#contents+ 1] = line
-			count[#count+ 1] = s
-		end
-	end
-	 
-	-- for k,v in pairs( contents_all ) do
-		-- print( "KEY: "..k.." | ".."VALUE: "..v )
-	-- end
-	
-	-- Выбираем один из доступных вариантов задания и отмечаем его показанным
-	-- В будущем можно усложнить шаблон, чтобы с приоритетом показывались фильмы, которых ещё не было видно
-	if contents ~= nil then
-		i = math.random(1,#contents)
-		str = contents[i]
+	elseif complexity == "easy" then
 		print("Выбранная строка: "..str)
 		print("Номер строки в файле: "..count[i])
 		if str:match ("showed=''") then
@@ -206,8 +149,22 @@ local function LoadEasyQuestion()
 		end
 	end
 	
+	-- for k,v in pairs( replay_table ) do
+		-- print( "KEY: "..k.." | ".."VALUE: "..v )
+	-- end	
+	
 	-- записываем в файл информацию о выбранном варианте
 	TableSave(contents_all,filePathLocal )
+	
+	-- записываем таблицу повторов для последних 5 фильмов
+	if #replay_table > 5 then
+		for j = #replay_table,6,-1 do
+			table.remove(replay_table,j)
+		end
+		TableSave(replay_table,replay_tablePath )
+	else
+		TableSave(replay_table,replay_tablePath )
+	end
 	
 	--Выбираем 3 других неправильных варианта
 	--В будущем усложить и добавить корреляцию по жанрам, году
@@ -226,23 +183,33 @@ local function LoadEasyQuestion()
 		-- print("Вариант 3_tmp: "..variant3_tmp)
 	end
 	
+	-- Определяем, какой кадр будет показан для фильма
 	if str ~= nil then
-		nameFilmTrue = string.match(str, "name_rus='(.-)'")
-		pictureFilmTrue = string.match(str, "img_easy='(.-)'")
-		if string.match (str, "showed='easy1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy1_and_hard2'") then
-			pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
-		else		
-			pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+		if complexity == "hard" then
+			pictureFilmTrue = string.match(str, "img_hard='(.-)'")
+			if string.match (str, "showed='hard1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy2_and_hard1'") then
+				pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+			else		
+				pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+			end
+			pictureFilmTrue = "img/"..pictureFilmTrue
+		elseif complexity == "easy" then
+			pictureFilmTrue = string.match(str, "img_easy='(.-)'")
+			if string.match (str, "showed='easy1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy1_and_hard2'") then
+				pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+			else		
+				pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+			end
+			pictureFilmTrue = "img/"..pictureFilmTrue
 		end
-		pictureFilmTrue = "img/"..pictureFilmTrue
 		
 		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
 			print("Название правильного фильма: "..nameFilmTrue)
-			print("Путь простой картинки: "..pictureFilmTrue)
+			print("Путь картинки: "..pictureFilmTrue)
 		else
 			print("Название правильного фильма: Что-то пошло не так")
 		end
-	end
+	end	
 	
 	if math.random(1,4) == 1 then
 		variant1 = nameFilmTrue
@@ -264,6 +231,22 @@ local function LoadEasyQuestion()
 		variant2 = variant2_tmp
 		variant3 = variant3_tmp
 		variant4 = nameFilmTrue
+	end
+end
+
+
+-- Загружаем файл с повторами в таблицу
+function LoadReplayFile()
+	-- Проверяем, есть ли локальный файл.
+	local file, errorString = io.open( replay_tablePath, "rb" )
+	if file then
+		file:close()
+	else
+		return
+	end
+	
+	for line in io.lines(replay_tablePath) do
+		replay_table[#replay_table+ 1] = line
 	end
 end
 
@@ -453,11 +436,8 @@ function scene:create( event )
 		score = composer.getVariable( "finalScore" )
 	end
 	
-	if math.random(1,4) > 1 then
-		LoadEasyQuestion()
-	else
-		LoadHardQuestion()
-	end
+	LoadQuestion()
+	
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth, display.contentHeight )
 	background.x = display.contentCenterX
@@ -566,7 +546,6 @@ function scene:create( event )
 		-- variant4Button:addEventListener( "touch", variant4Button )
 	end
 end
-
 
 -- show()
 function scene:show( event )
