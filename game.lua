@@ -1,6 +1,7 @@
 
 local composer = require( "composer" )
 local widget = require( "widget" )
+local appodeal = require( "plugin.appodeal" )
 
 local scene = composer.newScene()
 
@@ -28,12 +29,15 @@ local lose = false
 local scoreText
 
 local function updateText()
-    livesText.text = "Lives: " .. lives
     scoreText.text = "Score: " .. score
 end
 
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
+
+-- переменные для рекламы
+local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
+local add_count = 0
 
 local function LoadQuestion()
 
@@ -59,7 +63,7 @@ local function LoadQuestion()
 	LoadReplayFile()
 	
 	-- определяем сложность скриншота
-	if math.random(1,4) > 1 then
+	if math.random(1,2) == 1 then
 		complexity = "easy"
 		print("Выбранная сложность - "..complexity)
 	else
@@ -189,19 +193,30 @@ local function LoadQuestion()
 			pictureFilmTrue = string.match(str, "img_hard='(.-)'")
 			if string.match (str, "showed='hard1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy2_and_hard1'") then
 				pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+			elseif string.match (str, "showed='hard2'") or string.match (str, "showed='easy1_and_hard2'") or string.match (str, "showed='easy2_and_hard2'") then
+				if math.random(1,2) == 1 then
+					pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+				else
+					pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+				end
 			else		
 				pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
 			end
-			pictureFilmTrue = "img/"..pictureFilmTrue
 		elseif complexity == "easy" then
 			pictureFilmTrue = string.match(str, "img_easy='(.-)'")
 			if string.match (str, "showed='easy1'") or string.match (str, "showed='easy1_and_hard1'") or string.match (str, "showed='easy1_and_hard2'") then
 				pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+			elseif string.match (str, "showed='easy2'") or string.match (str, "showed='easy2_and_hard1'") or string.match (str, "showed='easy2_and_hard2'") then
+				if math.random(1,2) == 1 then
+					pictureFilmTrue = string.match(pictureFilmTrue, ",(.+)")
+				else
+					pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
+				end
 			else		
 				pictureFilmTrue = string.match(pictureFilmTrue, "(.-),")
 			end
-			pictureFilmTrue = "img/"..pictureFilmTrue
 		end
+		pictureFilmTrue = "img/"..pictureFilmTrue
 		
 		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
 			print("Название правильного фильма: "..nameFilmTrue)
@@ -346,6 +361,7 @@ local function SplitLongString(stringName)
 	return stringNameMod
 end
 
+-- Пока что меняем размер текста в кнопке в зависимости от длины
 local function ChooseSize(stringName)
 	local size = 40
 	if string.len(stringName) > 52 then
@@ -369,14 +385,21 @@ end
 
 local function endGame()
 	print( "Неправильно!")
+	appodeal.hide( "banner" )
 	composer.setVariable( "finalScore", score )
+	appodeal.show( "interstitial")
 	composer.removeScene( "game" )
 	composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
 end
 
 local function continueGame()
 	composer.setVariable( "finalScore", score )
-	print( "Правильно!")
+	add_count = add_count+1
+	print( "Правильно! Кол-во очков без рекламы: "..add_count)
+	if add_count >= math.random(5,8) then
+		add_count = 0
+		appodeal.show( "interstitial")
+	end
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
@@ -430,6 +453,19 @@ local function cheatButton( event )
     score = score+1
 end
 
+-- функция для рекламы
+local function adListener( event )
+
+    if ( event.phase == "init" ) then  -- Successful initialization
+		-- appodeal.show( "banner", {yAlign="bottom"} )
+		appodeal.load( "interstitial" )
+		
+    elseif ( event.phase == "failed" ) then  -- The ad failed to load
+        print( event.type )
+        print( event.isError )
+        print( event.response )
+    end
+end
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -461,13 +497,13 @@ function scene:create( event )
 	pictureFilm.x = display.contentCenterX
 	pictureFilm.y = display.contentCenterY/2+130
 
-	scoreText = display.newText( sceneGroup, "Score: " .. score, 100, 100, native.systemFont, 48 )
+	scoreText = display.newText( sceneGroup, "Score: " .. score, 140, 100, native.systemFont, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
 		local variant1Button = widget.newButton(
 			{
 				left = 20,
-				top = display.contentCenterY*1.5,
+				top = display.contentCenterY*1.35,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -483,7 +519,7 @@ function scene:create( event )
 		local variant2Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
-				top = display.contentCenterY*1.5,
+				top = display.contentCenterY*1.35,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -499,7 +535,7 @@ function scene:create( event )
 		local variant3Button = widget.newButton(
 			{
 				left = 20,
-				top = display.contentCenterY*1.5+140,
+				top = display.contentCenterY*1.35+140,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -515,7 +551,7 @@ function scene:create( event )
 		local variant4Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
-				top = display.contentCenterY*1.5+140,
+				top = display.contentCenterY*1.35+140,
 				width = display.contentCenterX-30,
 				height = 120,
 				defaultFile = "img/button_free.png",
@@ -538,19 +574,10 @@ function scene:create( event )
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
 		
-		scoreText:addEventListener( "tap", cheatButton )
-		-- variant1Button.touch = handleButtonEvent
-		-- variant1Button.id = "Вариант 1: "..variant1
-		-- variant2Button.touch = handleButtonEvent
-		-- variant2Button.id = "Вариант 2: "..variant1
-		-- variant3Button.touch = handleButtonEvent
-		-- variant3Button.id = "Вариант 3: "..variant1
-		-- variant4Button.touch = handleButtonEvent
-		-- variant4Button.id = "Вариант 4: "..variant1
-		-- variant1Button:addEventListener( "touch", variant1Button )
-		-- variant2Button:addEventListener( "touch", variant2Button )
-		-- variant3Button:addEventListener( "touch", variant3Button )
-		-- variant4Button:addEventListener( "touch", variant4Button )
+		-- scoreText:addEventListener( "tap", cheatButton )
+		
+		appodeal.init( adListener, { appKey=appKey } )
+		appodeal.show( "banner", {yAlign="bottom"} )
 	end
 end
 
