@@ -160,9 +160,9 @@ local function LoadQuestion()
 	-- записываем в файл информацию о выбранном варианте
 	TableSave(contents_all,filePathLocal )
 	
-	-- записываем таблицу повторов для последних 5 фильмов
-	if #replay_table > 5 then
-		for j = #replay_table,6,-1 do
+	-- записываем таблицу повторов для последних 25 фильмов
+	if #replay_table > 25 then
+		for j = #replay_table,26,-1 do
 			table.remove(replay_table,j)
 		end
 		TableSave(replay_table,replay_tablePath )
@@ -396,7 +396,8 @@ local function continueGame()
 	composer.setVariable( "finalScore", score )
 	add_count = add_count+1
 	print( "Правильно! Кол-во очков без рекламы: "..add_count)
-	if add_count >= math.random(5,8) then
+	-- Определяем через сколько правильных ответов будет показана реклама
+	if add_count >= 10 then
 		add_count = 0
 		appodeal.show( "interstitial")
 	end
