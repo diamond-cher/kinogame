@@ -344,36 +344,33 @@ function TableSave(  tbl,filename )
 end
 
 
--- Если название длинное, то делим по словам примерно в центре и переносим вторую часть на вторую строку (не работает)
+-- Если название длинное, то переносим вторую часть на вторую строку
 local function SplitLongString(stringName)
-	local stringNameMod = stringName
-	local t={} ; i=1
-	if string.len(stringName) > 5 then
-		for str in string.gmatch(stringName, "%s+") do
-				t[i] = str
-				i = i + 1
-				print( "Разделённая строка: " ..str )
+	local i=1
+	local count = string.len(stringName)
+	local number_s = stringName:find("%s")
+	if count > 27 and number_s then
+		-- если первое слово больше 7 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
+		if number_s > 14 then
+			stringName = stringName:gsub("%s+", "\n", 1)
+			print( "Перенос здесь: " ..number_s )
+		else
+			i = math.floor(count/2)
+			print( "Перенос после этого символа: " ..i )
+			local stringName1 = stringName:sub(1,i-1)
+			local stringName2 = stringName:sub(i)
+			stringName2 = stringName2:gsub("%s+", "\n", 1)
+			stringName = stringName1..stringName2
 		end
 	end
-	-- if t[1] ~= nil then
-		-- print( "Разделённая строка: " ..t[1] )
-	-- end
-	return stringNameMod
+	return stringName
 end
 
 -- Пока что меняем размер текста в кнопке в зависимости от длины
 local function ChooseSize(stringName)
 	local size = 40
-	if string.len(stringName) > 52 then
-		size = 16
-	elseif string.len(stringName) > 44 then
-		size = 20
-	elseif string.len(stringName) > 40 then
-		size = 23
-	elseif string.len(stringName) > 30 then
-		size = 28
-	elseif string.len(stringName) > 20 then
-		size = 33
+	if string.len(stringName) > 20 then
+		size = 35
 	elseif string.len(stringName) > 10 then
 		size = 38
 	else
@@ -405,45 +402,29 @@ local function continueGame()
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
 
-local function handleButtonEvent1( event )
+local function handleButtonEvent( event )
+	local buttonId = event.target.id
+	local buttonLabel
     if ( "ended" == event.phase ) then
-        print( "Button was pressed and released " )
-		if variant1 == nameFilmTrue and nameFilmTrue ~= nil then
-			score = score+1
-			continueGame()
+        print( "Button was pressed and released "..buttonId )
+		if buttonId == "variant1ButtonId" then
+			buttonLabel = variant1
+		elseif buttonId == "variant2ButtonId" then
+			buttonLabel = variant2
+		elseif buttonId == "variant3ButtonId" then
+			buttonLabel = variant3
 		else
-			endGame()
+			buttonLabel = variant4
 		end
-    end
-end
-local function handleButtonEvent2( event )
-    if ( "ended" == event.phase ) then
-        print( "Button was pressed and released " )
-		if variant2 == nameFilmTrue and nameFilmTrue ~= nil then
+		
+		if buttonLabel == nameFilmTrue then
 			score = score+1
-			continueGame()
-		else
-			endGame()
-		end
-    end
-end
-local function handleButtonEvent3( event )
-    if ( "ended" == event.phase ) then
-        print( "Button was pressed and released " )
-		if variant3 == nameFilmTrue and nameFilmTrue ~= nil then
-			score = score+1
-			continueGame()
-		else
-			endGame()
-		end
-    end
-end
-local function handleButtonEvent4( event )
-    if ( "ended" == event.phase ) then
-        print( "Button was pressed and released " )
-		if variant4 == nameFilmTrue and nameFilmTrue ~= nil then
-			score = score+1
-			continueGame()
+			variant1Button:setEnabled(false)
+			variant2Button:setEnabled(false)
+			variant3Button:setEnabled(false)
+			variant4Button:setEnabled(false)
+			timer.performWithDelay( 1000, continueGame, 1 )
+			-- continueGame()
 		else
 			endGame()
 		end
@@ -501,7 +482,7 @@ function scene:create( event )
 	scoreText = display.newText( sceneGroup, "Score: " .. score, 140, 100, native.systemFont, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
-		local variant1Button = widget.newButton(
+		variant1Button = widget.newButton(
 			{
 				left = 20,
 				top = display.contentCenterY*1.35,
@@ -509,15 +490,16 @@ function scene:create( event )
 				height = 120,
 				defaultFile = "img/button_free.png",
 				overFile = "img/button_touch.png",
-				id = "variant1Button",
-				label = variant1,
+				id = "variant1ButtonId",
+				label = SplitLongString(variant1),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant1),
 				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
-				onEvent = handleButtonEvent1
+				labelAlign = "center",
+				onEvent = handleButtonEvent
 			}
 		)
-		local variant2Button = widget.newButton(
+		variant2Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
 				top = display.contentCenterY*1.35,
@@ -525,15 +507,16 @@ function scene:create( event )
 				height = 120,
 				defaultFile = "img/button_free.png",
 				overFile = "img/button_touch.png",
-				id = "variant2Button",
-				label = variant2,
+				id = "variant2ButtonId",
+				label = SplitLongString(variant2),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant2),
 				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
-				onEvent = handleButtonEvent2
+				labelAlign = "center",
+				onEvent = handleButtonEvent
 			}
 		)
-		local variant3Button = widget.newButton(
+		variant3Button = widget.newButton(
 			{
 				left = 20,
 				top = display.contentCenterY*1.35+140,
@@ -541,15 +524,16 @@ function scene:create( event )
 				height = 120,
 				defaultFile = "img/button_free.png",
 				overFile = "img/button_touch.png",
-				id = "variant3Button",
-				label = variant3,
+				id = "variant3ButtonId",
+				label = SplitLongString(variant3),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant3),
 				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
-				onEvent = handleButtonEvent3
+				labelAlign = "center",
+				onEvent = handleButtonEvent
 			}
 		)
-		local variant4Button = widget.newButton(
+		variant4Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
 				top = display.contentCenterY*1.35+140,
@@ -557,12 +541,13 @@ function scene:create( event )
 				height = 120,
 				defaultFile = "img/button_free.png",
 				overFile = "img/button_touch.png",
-				id = "variant4Button",
-				label = variant4,
+				id = "variant4ButtonId",
+				label = SplitLongString(variant4),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant4),
 				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
-				onEvent = handleButtonEvent4
+				labelAlign = "center",
+				onEvent = handleButtonEvent
 			}
 		)
 		-- привязываем кнопку к сцене
