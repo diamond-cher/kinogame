@@ -28,10 +28,6 @@ local lose = false
 
 local scoreText
 
-local function updateText()
-    scoreText.text = "Score: " .. score
-end
-
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
 
@@ -361,6 +357,23 @@ local function SplitLongString(stringName)
 			stringName2 = stringName2:gsub("%s+", "\n", 1)
 			stringName = stringName1..stringName2
 		end
+		-- чтобы перенесённая и оставшаяся фраза были примерно по центру, добавляем в начало наименьшей части пробелы
+		local number_n = stringName:find("\n")
+		if number_n then
+			local stringName1 = stringName:sub(1,number_n-1)
+			local stringName2 = stringName:sub(number_n+1)
+			local symbol_s = " "
+			if string.len(stringName1) > string.len(stringName2) then
+				local difference = string.len(stringName1) - string.len(stringName2)
+				local quantity = math.floor(difference/2)
+				stringName2 = "\n"..string.rep(symbol_s, quantity)..stringName2
+			elseif string.len(stringName1) < string.len(stringName2) then
+				local difference = string.len(stringName2) - string.len(stringName1)
+				local quantity = math.floor(difference/2)
+				stringName1 = string.rep(symbol_s, quantity)..stringName1.."\n"
+			end
+			stringName = stringName1..stringName2
+		end
 	end
 	return stringName
 end
@@ -395,6 +408,80 @@ local function continueGame()
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
 
+-- при правильном ответе создаём зелёную кнопку поверх обычной
+local function GenerateGreenButton( self )
+	local left_position
+	local top_position
+	if self == variant1 then
+		left_position = 20
+		top_position = display.contentCenterY*1.35
+	elseif self == variant2 then
+		left_position = display.contentCenterX+10
+		top_position = display.contentCenterY*1.35
+	elseif self == variant3 then
+		left_position = 20
+		top_position = display.contentCenterY*1.35+140
+	else
+		left_position = display.contentCenterX+10
+		top_position = display.contentCenterY*1.35+140
+	end
+    greenButton = widget.newButton(
+			{
+				left = left_position,
+				top = top_position,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_green.png",
+				overFile = "img/button_green.png",
+				id = "greenButton",
+				label = SplitLongString(self),
+				font = native.systemFontBold,
+				fontSize = ChooseSize(self),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelAlign = "center",
+				isEnabled  = false
+			}
+		)
+	sceneGroup:insert( greenButton )
+end
+
+-- при неправильном ответе создаём красную кнопку поверх обычной
+local function GenerateRedButton( self )
+	local left_position
+	local top_position
+	if self == variant1 then
+		left_position = 20
+		top_position = display.contentCenterY*1.35
+	elseif self == variant2 then
+		left_position = display.contentCenterX+10
+		top_position = display.contentCenterY*1.35
+	elseif self == variant3 then
+		left_position = 20
+		top_position = display.contentCenterY*1.35+140
+	else
+		left_position = display.contentCenterX+10
+		top_position = display.contentCenterY*1.35+140
+	end
+    redButton = widget.newButton(
+			{
+				left = left_position,
+				top = top_position,
+				width = display.contentCenterX-30,
+				height = 120,
+				defaultFile = "img/button_red.png",
+				overFile = "img/button_red.png",
+				id = "redButton",
+				label = SplitLongString(self),
+				font = native.systemFontBold,
+				fontSize = ChooseSize(self),
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelAlign = "center",
+				isEnabled  = false
+			}
+		)
+	sceneGroup:insert( redButton )
+end
+
 local function handleButtonEvent( event )
 	local buttonId = event.target.id
 	local buttonLabel
@@ -412,6 +499,7 @@ local function handleButtonEvent( event )
 		
 		if buttonLabel == nameFilmTrue then
 			score = score+1
+			GenerateGreenButton( buttonLabel )
 			variant1Button:setEnabled(false)
 			variant2Button:setEnabled(false)
 			variant3Button:setEnabled(false)
@@ -419,13 +507,21 @@ local function handleButtonEvent( event )
 			timer.performWithDelay( 1000, continueGame, 1 )
 			-- continueGame()
 		else
-			endGame()
+			GenerateRedButton( buttonLabel )
+			variant1Button:setEnabled(false)
+			variant2Button:setEnabled(false)
+			variant3Button:setEnabled(false)
+			variant4Button:setEnabled(false)
+			timer.performWithDelay( 1000, endGame, 1 )
+			-- endGame()
 		end
     end
 end
 
+-- накручиваем очки по тапу по ним (читерская функция)
 local function cheatButton( event )
     score = score+1
+    scoreText.text = "Score: " .. score
 end
 
 -- функция для рекламы
@@ -448,7 +544,7 @@ end
 -- create()
 function scene:create( event )
 
-	local sceneGroup = self.view
+	sceneGroup = self.view
 	if composer.getVariable( "finalScore" ) ~= nil then
 		score = composer.getVariable( "finalScore" )
 	end
@@ -472,7 +568,7 @@ function scene:create( event )
 	pictureFilm.x = display.contentCenterX
 	pictureFilm.y = display.contentCenterY/2+130
 
-	scoreText = display.newText( sceneGroup, "Score: " .. score, 140, 100, native.systemFont, 48 )
+	scoreText = display.newText( sceneGroup, "Угадано: " .. score, 140, 100, native.systemFont, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
 		variant1Button = widget.newButton(
