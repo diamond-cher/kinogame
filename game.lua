@@ -37,7 +37,6 @@ local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory
 
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
-local add_count = 0
 
 local function LoadQuestion()
 
@@ -391,13 +390,7 @@ end
 
 local function continueGame()
 	composer.setVariable( "finalScore", score )
-	add_count = add_count+1
-	print( "Правильно! Кол-во очков без рекламы: "..add_count)
-	-- Определяем через сколько правильных ответов будет показана реклама
-	if add_count >= 10 then
-		add_count = 0
-		appodeal.show( "interstitial")
-	end
+	print( "Правильно!")
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
 end
