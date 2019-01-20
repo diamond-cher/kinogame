@@ -16,6 +16,7 @@ local variant1 = "Вариант 1"
 local variant2 = "Вариант 2"
 local variant3 = "Вариант 3"
 local variant4 = "Вариант 4"
+local numbersFilmFalse = {}	-- таблица неправильных вариантов
 
 -- переменны для отлова повторов
 local replay
@@ -24,7 +25,7 @@ local replay_tablePath = system.pathForFile( "replay_table.xml", system.Document
 
 -- Initialize variables
 local score = 0
-local lose = false
+local hint50 = true
 
 local scoreText
 
@@ -33,6 +34,7 @@ local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory
 
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
+local adCounter = 0
 
 local function LoadQuestion()
 
@@ -221,26 +223,31 @@ local function LoadQuestion()
 		end
 	end	
 	
+	-- определяем, в каком месте будет правильный вариант писаться
 	if math.random(1,4) == 1 then
 		variant1 = nameFilmTrue
 		variant2 = variant2_tmp
 		variant3 = variant3_tmp
 		variant4 = variant1_tmp
+		numbersFilmFalse = {"variant2", "variant3", "variant4"}
 	elseif math.random(1,3) == 1 then
 		variant1 = variant1_tmp
 		variant2 = nameFilmTrue
 		variant3 = variant3_tmp
 		variant4 = variant2_tmp
+		numbersFilmFalse = {"variant1", "variant3", "variant4"}
 	elseif math.random(1,2) == 1 then
 		variant1 = variant1_tmp
 		variant2 = variant2_tmp
 		variant3 = nameFilmTrue
 		variant4 = variant3_tmp
+		numbersFilmFalse = {"variant1", "variant2", "variant4"}
 	else
 		variant1 = variant1_tmp
 		variant2 = variant2_tmp
 		variant3 = variant3_tmp
 		variant4 = nameFilmTrue
+		numbersFilmFalse = {"variant1", "variant2", "variant3"}
 	end
 end
 
@@ -396,13 +403,16 @@ local function endGame()
 	print( "Неправильно!")
 	appodeal.hide( "banner" )
 	composer.setVariable( "finalScore", score )
-	appodeal.show( "interstitial")
+	if adCounter >= 5 then
+		appodeal.show( "interstitial")
+	end
 	composer.removeScene( "game" )
 	composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
 end
 
 local function continueGame()
 	composer.setVariable( "finalScore", score )
+	adCounter = adCounter+1
 	print( "Правильно!")
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game", { time=800, effect="crossFade" } )
@@ -504,6 +514,7 @@ local function handleButtonEvent( event )
 			variant2Button:setEnabled(false)
 			variant3Button:setEnabled(false)
 			variant4Button:setEnabled(false)
+			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, continueGame, 1 )
 			-- continueGame()
 		else
@@ -512,12 +523,60 @@ local function handleButtonEvent( event )
 			variant2Button:setEnabled(false)
 			variant3Button:setEnabled(false)
 			variant4Button:setEnabled(false)
+			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, endGame, 1 )
 			-- endGame()
 		end
     end
 end
 
+-- выбор цвета кнопки подсказки 50:50
+local function hint50ButtonEvent( event )
+	local buttonId = event.target.id
+	local deleteButtonl
+	local deleteButton2
+    if ( "ended" == event.phase ) then
+		hint50 = false
+		while deleteButtonl == deleteButton2 do
+			deleteButtonl, deleteButton2 = numbersFilmFalse[math.random(1, #numbersFilmFalse)], numbersFilmFalse[math.random(1, #numbersFilmFalse)]
+		end
+		if deleteButtonl == "variant1" then
+			display.remove(variant1Button)
+		elseif deleteButtonl == "variant2" then
+			display.remove(variant2Button)
+		elseif deleteButtonl == "variant3" then
+			display.remove(variant3Button)
+		else
+			display.remove(variant4Button)
+		end
+		if deleteButton2 == "variant1" then
+			display.remove(variant1Button)
+		elseif deleteButton2 == "variant2" then
+			display.remove(variant2Button)
+		elseif deleteButton2 == "variant3" then
+			display.remove(variant3Button)
+		else
+			display.remove(variant4Button)
+		end
+		grayButton = widget.newButton(
+			{
+				x = display.contentCenterX,
+				y = display.contentCenterY*1.25,
+				width = 192,
+				height = 86,
+				defaultFile = "img/buttonCircle_gray.png",
+				overFile = "img/buttonCircle_gray.png",
+				id = "hint50Button",
+				label = "50:50",
+				font = native.systemFontBold,
+				fontSize = 46,
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.1, 0.0, 0.9 } },
+				labelAlign = "center",
+			}
+		)
+		sceneGroup:insert( grayButton )
+    end
+end
 -- накручиваем очки по тапу по ним (читерская функция)
 local function cheatButton( event )
     score = score+1
@@ -639,21 +698,58 @@ function scene:create( event )
 				onEvent = handleButtonEvent
 			}
 		)
-		-- привязываем кнопку к сцене
+		
+		if hint50 then
+			hint50Button = widget.newButton(
+				{
+					x = display.contentCenterX,
+					y = display.contentCenterY*1.25,
+					width = 192,
+					height = 86,
+					defaultFile = "img/buttonCircle_free.png",
+					overFile = "img/buttonCircle_touch.png",
+					id = "hint50Button",
+					label = "50:50",
+					font = native.systemFontBold,
+					fontSize = 46,
+					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+					labelAlign = "center",
+					onEvent = hint50ButtonEvent
+				}
+			)
+		else
+			hint50Button = widget.newButton(
+				{
+					x = display.contentCenterX,
+					y = display.contentCenterY*1.25,
+					width = 192,
+					height = 86,
+					defaultFile = "img/buttonCircle_gray.png",
+					overFile = "img/buttonCircle_gray.png",
+					id = "hint50Button",
+					label = "50:50",
+					font = native.systemFontBold,
+					fontSize = 46,
+					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.1, 0.0, 0.9 } },
+					labelAlign = "center",
+				}
+			)
+		end
+		
+		-- привязываем кнопки к сцене
 		sceneGroup:insert( variant1Button )
 		sceneGroup:insert( variant2Button )
 		sceneGroup:insert( variant3Button )
 		sceneGroup:insert( variant4Button )
+		sceneGroup:insert( hint50Button )
 		print("Вариант 1: "..variant1)
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
-		
 		-- scoreText:addEventListener( "tap", cheatButton )
-		
-		appodeal.init( adListener, { appKey=appKey } )
-		appodeal.show( "banner", {yAlign="bottom"} )
 	end
+	appodeal.init( adListener, { appKey=appKey } )
+	appodeal.show( "banner", {yAlign="bottom"} )
 end
 
 -- show()
