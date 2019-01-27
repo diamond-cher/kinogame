@@ -407,7 +407,7 @@ local function endGame()
 		appodeal.show( "interstitial")
 	end
 	composer.removeScene( "game" )
-	composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
+	composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
 end
 
 local function continueGame()
@@ -415,7 +415,7 @@ local function continueGame()
 	adCounter = adCounter+1
 	print( "Правильно!")
 	composer.removeScene( "game", true )
-	composer.gotoScene( "game", { time=800, effect="crossFade" } )
+	composer.gotoScene( "game" )
 end
 
 -- при правильном ответе создаём зелёную кнопку поверх обычной
@@ -570,7 +570,7 @@ local function hint50ButtonEvent( event )
 				label = "50:50",
 				font = native.systemFontBold,
 				fontSize = 46,
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.1, 0.0, 0.9 } },
+				labelColor = { default = { 0.6, 0.6, 0.6 }, over = { 0.6, 0.6, 0.6 } },
 				labelAlign = "center",
 			}
 		)
@@ -730,7 +730,7 @@ function scene:create( event )
 					label = "50:50",
 					font = native.systemFontBold,
 					fontSize = 46,
-					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.1, 0.0, 0.9 } },
+					labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
 					labelAlign = "center",
 				}
 			)

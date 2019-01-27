@@ -11,13 +11,13 @@ local scene = composer.newScene()
 
 local function gotoGame( event )
     if ( "ended" == event.phase ) then
-		composer.gotoScene( "game" )
+		composer.gotoScene( "game", { time=500, effect="slideLeft" } )
     end
 end
 
 local function gotoHighScores( event )
     if ( "ended" == event.phase ) then
-		composer.gotoScene( "highscores" )
+		composer.gotoScene( "highscores", { time=500, effect="slideLeft" } )
     end
 end
 

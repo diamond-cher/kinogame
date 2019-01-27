@@ -49,7 +49,7 @@ end
 
 local function gotoMenu( event )
     if ( "ended" == event.phase ) then
-		composer.gotoScene( "menu" )
+		composer.gotoScene( "menu", { time=500, effect="slideRight" } )
     end
 end
 
