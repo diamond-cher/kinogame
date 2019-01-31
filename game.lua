@@ -366,22 +366,61 @@ local function SplitLongString(stringName)
 	local i=1
 	local count = string.len(stringName)
 	local number_s = stringName:find("%s")
-	if count > 27 and number_s then
-		-- если первое слово больше 7 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
-		if number_s > 14 then
+	-- если длина строки больше 12 символов, то делаем перенос
+	if count > 24 and number_s then
+		-- если первое слово больше 11 или 7 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
+		if number_s > 22 and count < 60 then
 			stringName = stringName:gsub("%s+", "\n", 1)
 			print( "Перенос здесь: " ..number_s )
+		-- elseif number_s > 14 and count < 60 then
+			-- stringName = stringName:gsub("%s+", "\n", 1)
+			-- print( "Перенос здесь: " ..number_s )
 		else
+			-- ищем середину фразы
 			i = math.floor(count/2)
+			-- ищем ближайший к середине пробел
+			local number_s = stringName:find("%s", i)
+			local revers_number_s = string.find(string.reverse( stringName ), "%s", i)
+			if revers_number_s then
+				print ("revers_number_s: "..revers_number_s)
+				if number_s then
+					if number_s-i > revers_number_s-i then
+						i = i - revers_number_s-i - 1
+					end
+				else
+					i = i - revers_number_s-i - 1
+				end
+			end
+			-- for j=0,i do
+				-- local j_i = i-j
+				-- if stringName:match ("%s", j_i) then
+					-- i = j_i
+					-- break
+				-- end
+			-- end
 			print( "Перенос после этого символа: " ..i )
 			local stringName1 = stringName:sub(1,i-1)
 			local stringName2 = stringName:sub(i)
-			stringName2 = stringName2:gsub("%s+", "\n", 1)
-			stringName = stringName1..stringName2
+			
+			
+			-- условие, чтобы верхняя часть не вылезала за рамки из-за своего размера
+			if string.len(stringName1) < 40 then
+				stringName2 = stringName2:gsub("%s+", "\n", 1)
+				stringName = stringName1..stringName2
+			else
+			-- если первая часть охуенно большая, то делим её ещё пополам и ищем пробел уже там
+				i = math.floor(i/2)
+				local stringName1 = stringName1:sub(1,i-1)
+				local stringName12 = stringName1:sub(i)
+				stringName12 = stringName12:gsub("%s+", "\n", 1)
+				stringName = stringName1..stringName12..stringName2
+			end
 		end
+		
 		-- чтобы перенесённая и оставшаяся фраза были примерно по центру, добавляем в начало наименьшей части пробелы
 		local number_n = stringName:find("\n")
 		if number_n then
+			print( "Нашлась n здесь: "..number_n )
 			local stringName1 = stringName:sub(1,number_n-1)
 			local stringName2 = stringName:sub(number_n+1)
 			local symbol_s = " "
@@ -393,6 +432,8 @@ local function SplitLongString(stringName)
 				local difference = string.len(stringName2) - string.len(stringName1)
 				local quantity = math.floor(difference/2)
 				stringName1 = string.rep(symbol_s, quantity)..stringName1.."\n"
+			elseif string.len(stringName1) == string.len(stringName2) then
+				stringName1 = stringName1.."\n"
 			end
 			stringName = stringName1..stringName2
 		end
@@ -403,7 +444,13 @@ end
 -- Пока что меняем размер текста в кнопке в зависимости от длины
 local function ChooseSize(stringName)
 	local size = 40
-	if string.len(stringName) > 20 then
+	if string.len(stringName) > 75 then
+		size = 23
+	elseif string.len(stringName) > 70 then
+		size = 27
+	elseif string.len(stringName) > 60 then
+		size = 31 -- 74 и больше надо оставить такой размер
+	elseif string.len(stringName) > 20 then
 		size = 35
 	elseif string.len(stringName) > 10 then
 		size = 38
@@ -594,8 +641,9 @@ local function hint50ButtonEvent( event )
 end
 -- накручиваем очки по тапу по ним (читерская функция)
 local function cheatButton( event )
-    score = score+1
-    scoreText.text = "Score: " .. score
+    -- score = score+1
+    -- scoreText.text = "Score: " .. score
+	continueGame()
 end
 
 -- функция для рекламы
@@ -761,7 +809,7 @@ function scene:create( event )
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
-		-- scoreText:addEventListener( "tap", cheatButton )
+		scoreText:addEventListener( "tap", cheatButton )
 	end
 	appodeal.init( adListener, { appKey=appKey } )
 	appodeal.show( "banner", {yAlign="bottom"} )
