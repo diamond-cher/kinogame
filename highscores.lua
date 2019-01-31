@@ -126,7 +126,7 @@ function scene:create( event )
 				label = "Меню",
 				font = native.systemFontBold,
 				fontSize = 64,
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				onEvent = gotoMenu
 			}
 		)

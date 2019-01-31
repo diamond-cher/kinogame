@@ -29,8 +29,11 @@ local hint50 = true
 
 local scoreText
 
+-- файлы
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
+local filePath1 = system.pathForFile ("films1.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
+local filePathUpdates = system.pathForFile ("updates1.xml", system.DocumentsDirectory)
 
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
@@ -58,6 +61,18 @@ local function LoadQuestion()
 	end
 	
 	LoadReplayFile()
+	
+	-- Добавляем в таблицу новые фильмы
+	local file_updates, errorString = io.open( filePathUpdates, "rb" )
+	if file_updates then
+		file_updates:close()
+	else
+		for line in io.lines(filePath1) do
+			contents_all[#contents_all+ 1] = line
+		end
+		file_updates, errorString = io.open( filePathUpdates, "w" )
+		file_updates:close()
+	end
 	
 	-- определяем сложность скриншота
 	if math.random(1,2) == 1 then
@@ -447,7 +462,7 @@ local function GenerateGreenButton( self )
 				label = SplitLongString(self),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(self),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				isEnabled  = false
 			}
@@ -484,7 +499,7 @@ local function GenerateRedButton( self )
 				label = SplitLongString(self),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(self),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				isEnabled  = false
 			}
@@ -642,7 +657,7 @@ function scene:create( event )
 				label = SplitLongString(variant1),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant1),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -659,7 +674,7 @@ function scene:create( event )
 				label = SplitLongString(variant2),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant2),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -676,7 +691,7 @@ function scene:create( event )
 				label = SplitLongString(variant3),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant3),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -693,7 +708,7 @@ function scene:create( event )
 				label = SplitLongString(variant4),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant4),
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}

@@ -53,7 +53,7 @@ function scene:create( event )
 				label = "Играть",
 				font = native.systemFontBold,
 				fontSize = 64,
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				onEvent = gotoGame
 			}
 		)
@@ -70,7 +70,7 @@ function scene:create( event )
 				label = "Таблица рекордов",
 				font = native.systemFontBold,
 				fontSize = 40,
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
 				onEvent = gotoHighScores
 			}
 		)
