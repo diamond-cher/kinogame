@@ -809,7 +809,7 @@ function scene:create( event )
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
-		scoreText:addEventListener( "tap", cheatButton )
+		-- scoreText:addEventListener( "tap", cheatButton )
 	end
 	appodeal.init( adListener, { appKey=appKey } )
 	appodeal.show( "banner", {yAlign="bottom"} )
