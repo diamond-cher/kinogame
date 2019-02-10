@@ -25,15 +25,18 @@ local replay_tablePath = system.pathForFile( "replay_table.xml", system.Document
 
 -- Initialize variables
 local score = 0
-local hint50 = true
+local coins
+local freeCoinsCounter = 0
 
 local scoreText
+local coinsText
 
 -- файлы
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
 local filePath1 = system.pathForFile ("films1.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
 local filePathUpdates = system.pathForFile ("updates1.xml", system.DocumentsDirectory)
+local filePathCoins = system.pathForFile ("coins.xml", system.DocumentsDirectory)
 
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
@@ -282,6 +285,30 @@ function LoadReplayFile()
 	end
 end
 
+-- Загружаем монеты
+function LoadCoins()
+	-- Проверяем, есть ли локальный файл.
+	local file, errorString = io.open( filePathCoins, "rb" )
+	if file then
+		coins = file:read( "*n" )
+		file:close()
+	else
+		local file, errorString = io.open( filePathCoins, "wb" )
+		file:write( "5" )
+		file:close()
+		coins = 5
+	end
+	
+	return coins
+end
+
+-- Сохраняем монеты в файле
+function SaveCoins()
+	local file, errorString = io.open( filePathCoins, "wb" )
+	file:write( coins )
+	file:close()
+end
+
 local function exportstring( s )
   return string.format("%s", s)
 end
@@ -360,8 +387,25 @@ function TableSave(  tbl,filename )
   file:close()
 end
 
+--bar
+local function UpdateBar()
 
--- Если название длинное, то переносим вторую часть на вторую строку
+	local scoreText = display.newText( sceneGroup, "Угадано: " .. score, 40, 100, native.systemFont, 48 )
+	scoreText:setFillColor( 0, 0, 0 )
+	scoreText.anchorX = 0
+	
+	local coinsBar = display.newImageRect( sceneGroup, "coins_bar.png", 96, 96 )
+	coinsBar.x = display.contentCenterX+140
+	coinsBar.y = 100
+	display.remove( coinsText )
+	coinsText = display.newText( sceneGroup, coins, display.contentCenterX+200, 100, native.systemFont, 48 )
+	coinsText:setFillColor( 0, 0, 0 )
+	coinsText.anchorX = 0
+	
+	
+end
+
+-- Если название длинное, то переносим вторую часть на другую строку
 local function SplitLongString(stringName)
 	local i=1
 	local count = string.len(stringName)
@@ -441,7 +485,7 @@ local function SplitLongString(stringName)
 	return stringName
 end
 
--- Пока что меняем размер текста в кнопке в зависимости от длины
+-- Меняем размер текста в кнопке в зависимости от длины
 local function ChooseSize(stringName)
 	local size = 40
 	if string.len(stringName) > 75 then
@@ -461,6 +505,7 @@ local function ChooseSize(stringName)
 	return size
 end
 
+-- Запускается при ошибке
 local function endGame()
 	print( "Неправильно!")
 	appodeal.hide( "banner" )
@@ -472,9 +517,17 @@ local function endGame()
 	composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
 end
 
+-- Запускается при выборе правильного ответа
 local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
+	freeCoinsCounter = freeCoinsCounter+1
+	if freeCoinsCounter == 10 then
+		freeCoinsCounter = 0
+		coins = coins+1
+		SaveCoins()
+		UpdateBar()
+	end
 	print( "Правильно!")
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game" )
@@ -554,6 +607,7 @@ local function GenerateRedButton( self )
 	sceneGroup:insert( redButton )
 end
 
+-- обрабатываем нажатие на кнопку ответа
 local function handleButtonEvent( event )
 	local buttonId = event.target.id
 	local buttonLabel
@@ -592,13 +646,15 @@ local function handleButtonEvent( event )
     end
 end
 
--- выбор цвета кнопки подсказки 50:50
+-- активация и подсказки 50:50
 local function hint50ButtonEvent( event )
 	local buttonId = event.target.id
 	local deleteButtonl
 	local deleteButton2
     if ( "ended" == event.phase ) then
-		hint50 = false
+		coins = coins-1
+		SaveCoins()
+		UpdateBar()
 		while deleteButtonl == deleteButton2 do
 			deleteButtonl, deleteButton2 = numbersFilmFalse[math.random(1, #numbersFilmFalse)], numbersFilmFalse[math.random(1, #numbersFilmFalse)]
 		end
@@ -620,7 +676,49 @@ local function hint50ButtonEvent( event )
 		else
 			display.remove(variant4Button)
 		end
-		grayButton = widget.newButton(
+		UpdateHints(true)
+		-- grayButton = widget.newButton(
+			-- {
+				-- x = display.contentCenterX,
+				-- y = display.contentCenterY*1.25,
+				-- width = 192,
+				-- height = 86,
+				-- defaultFile = "img/buttonCircle_gray.png",
+				-- overFile = "img/buttonCircle_gray.png",
+				-- id = "hint50Button",
+				-- label = "50:50",
+				-- font = native.systemFontBold,
+				-- fontSize = 46,
+				-- labelColor = { default = { 0.6, 0.6, 0.6 }, over = { 0.6, 0.6, 0.6 } },
+				-- labelAlign = "center",
+			-- }
+		-- )
+		-- sceneGroup:insert( grayButton )
+    end
+end
+
+-- подсказки (пока что только 50:50)
+function UpdateHints(used50)
+	if coins > 0 and used50 == nil then
+		hint50Button = widget.newButton(
+			{
+				x = display.contentCenterX,
+				y = display.contentCenterY*1.25,
+				width = 192,
+				height = 86,
+				defaultFile = "img/buttonCircle_free.png",
+				overFile = "img/buttonCircle_touch.png",
+				id = "hint50Button",
+				label = "50:50",
+				font = native.systemFontBold,
+				fontSize = 46,
+				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelAlign = "center",
+				onEvent = hint50ButtonEvent
+			}
+		)
+	else
+		hint50Button = widget.newButton(
 			{
 				x = display.contentCenterX,
 				y = display.contentCenterY*1.25,
@@ -632,13 +730,31 @@ local function hint50ButtonEvent( event )
 				label = "50:50",
 				font = native.systemFontBold,
 				fontSize = 46,
-				labelColor = { default = { 0.6, 0.6, 0.6 }, over = { 0.6, 0.6, 0.6 } },
+				labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
 				labelAlign = "center",
 			}
 		)
-		sceneGroup:insert( grayButton )
+	end
+	sceneGroup:insert( hint50Button )
+end
+
+-- получение монет через просмотр видео
+local function plusCoinsButtonEvent( event )
+    if ( "ended" == event.phase ) then
+		if appodeal.isLoaded( "rewardedVideo" ) then
+			appodeal.show( "rewardedVideo" )
+			local alert = native.showAlert( "Поздравляем!", "За просмотр видео вы получили 2 монеты!", { "Превосходно!" } )
+			coins = coins+2
+			SaveCoins()
+			UpdateBar()
+			UpdateHints()
+		else
+			local alert = native.showAlert( "Ошибка!", "Возможно, отсутствует интернет. Попробуйте запросить рекламу позже", { "Хорошо" } )
+		end
+		
     end
 end
+
 -- накручиваем очки по тапу по ним (читерская функция)
 local function cheatButton( event )
     -- score = score+1
@@ -652,6 +768,7 @@ local function adListener( event )
     if ( event.phase == "init" ) then  -- Successful initialization
 		-- appodeal.show( "banner", {yAlign="bottom"} )
 		appodeal.load( "interstitial" )
+		appodeal.load( "rewardedVideo" )
 		
     elseif ( event.phase == "failed" ) then  -- The ad failed to load
         print( event.type )
@@ -673,6 +790,9 @@ function scene:create( event )
 	
 	
 	LoadQuestion()
+	if coins == nil then
+		LoadCoins()
+	end
 	
 	-- Code here runs when the scene is first created but has not yet appeared on screen
 	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth, display.contentHeight )
@@ -689,9 +809,9 @@ function scene:create( event )
 	until pictureFilm
 	pictureFilm.x = display.contentCenterX
 	pictureFilm.y = display.contentCenterY/2+130
-
-	scoreText = display.newText( sceneGroup, "Угадано: " .. score, 140, 100, native.systemFont, 48 )
-	scoreText:setFillColor( 0, 0, 0 )
+	
+	UpdateBar()
+	
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
 		variant1Button = widget.newButton(
 			{
@@ -762,49 +882,30 @@ function scene:create( event )
 			}
 		)
 		
-		if hint50 then
-			hint50Button = widget.newButton(
+		UpdateHints()
+		plusCoinsButton = widget.newButton(
 				{
-					x = display.contentCenterX,
-					y = display.contentCenterY*1.25,
-					width = 192,
-					height = 86,
-					defaultFile = "img/buttonCircle_free.png",
-					overFile = "img/buttonCircle_touch.png",
-					id = "hint50Button",
-					label = "50:50",
+					x = display.contentCenterX*2-65,
+					y = 100,
+					width = 80,
+					height = 80,
+					defaultFile = "img/button_free.png",
+					overFile = "img/button_touch.png",
+					id = "plusCoinsButton",
 					font = native.systemFontBold,
-					fontSize = 46,
-					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+					label = "+",
+					fontSize = 100,
+					labelColor = { default = { 0, 0, 0}, over = { 1, 0, 0 } },
 					labelAlign = "center",
-					onEvent = hint50ButtonEvent
+					onEvent = plusCoinsButtonEvent
 				}
 			)
-		else
-			hint50Button = widget.newButton(
-				{
-					x = display.contentCenterX,
-					y = display.contentCenterY*1.25,
-					width = 192,
-					height = 86,
-					defaultFile = "img/buttonCircle_gray.png",
-					overFile = "img/buttonCircle_gray.png",
-					id = "hint50Button",
-					label = "50:50",
-					font = native.systemFontBold,
-					fontSize = 46,
-					labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
-					labelAlign = "center",
-				}
-			)
-		end
-		
 		-- привязываем кнопки к сцене
 		sceneGroup:insert( variant1Button )
 		sceneGroup:insert( variant2Button )
 		sceneGroup:insert( variant3Button )
 		sceneGroup:insert( variant4Button )
-		sceneGroup:insert( hint50Button )
+		sceneGroup:insert( plusCoinsButton )
 		print("Вариант 1: "..variant1)
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
