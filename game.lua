@@ -26,7 +26,7 @@ local replay_tablePath = system.pathForFile( "replay_table.xml", system.Document
 -- Initialize variables
 local score = 0
 local coins
-local freeCoinsCounter = 0
+local used50 = false
 
 local scoreText
 local coinsText
@@ -51,6 +51,7 @@ local function LoadQuestion()
 	local i
 	local variant1_tmp, variant2_tmp, variant3_tmp
 	local complexity
+	used50 = false
 	
 	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
 	local file, errorString = io.open( filePathLocal, "rb" )
@@ -298,7 +299,9 @@ function LoadCoins()
 		file:close()
 		coins = 5
 	end
-	
+	if coins == 0 then
+		coins = 1
+	end
 	return coins
 end
 
@@ -387,7 +390,7 @@ function TableSave(  tbl,filename )
   file:close()
 end
 
---bar
+--Обновляем бар сверху
 local function UpdateBar()
 
 	local scoreText = display.newText( sceneGroup, "Угадано: " .. score, 40, 100, native.systemFont, 48 )
@@ -402,7 +405,7 @@ local function UpdateBar()
 	coinsText:setFillColor( 0, 0, 0 )
 	coinsText.anchorX = 0
 	
-	
+	-- coinsBar:addEventListener( "tap", function () native.showAlert( "Как получить монеты", "Монеты выдаются при угадывании фильмов. Ещё их можно получить посмотрев рекламу.", { "Понятно" } ) end )
 end
 
 -- Если название длинное, то переносим вторую часть на другую строку
@@ -521,13 +524,6 @@ end
 local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
-	freeCoinsCounter = freeCoinsCounter+1
-	if freeCoinsCounter == 10 then
-		freeCoinsCounter = 0
-		coins = coins+1
-		SaveCoins()
-		UpdateBar()
-	end
 	print( "Правильно!")
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game" )
@@ -676,7 +672,8 @@ local function hint50ButtonEvent( event )
 		else
 			display.remove(variant4Button)
 		end
-		UpdateHints(true)
+		used50 = true
+		UpdateHints()
 		-- grayButton = widget.newButton(
 			-- {
 				-- x = display.contentCenterX,
@@ -698,8 +695,8 @@ local function hint50ButtonEvent( event )
 end
 
 -- подсказки (пока что только 50:50)
-function UpdateHints(used50)
-	if coins > 0 and used50 == nil then
+function UpdateHints()
+	if coins > 0 and used50 == false then
 		hint50Button = widget.newButton(
 			{
 				x = display.contentCenterX,
