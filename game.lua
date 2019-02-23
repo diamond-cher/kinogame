@@ -41,7 +41,17 @@ local filePathCoins = system.pathForFile ("coins.xml", system.DocumentsDirectory
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
 local adCounter = 0
+local user_id = system.getInfo( "deviceID" )
 
+-- переменные для текста 
+local goodAlertTitle_Ru = "Поздравляем!"
+local goodAlertBody_Ru = "За просмотр видео вы получили 2 монеты!"
+local goodAlertButton_Ru = "Превосходно!"
+
+local badAlertTitle_Ru = "Ошибка!"
+local badAlertBody_Ru = "Возможно, отсутствует интернет. Попробуйте запросить рекламу позже"
+local badAlertButton_Ru = "Хорошо"
+-- Выбор кадра из фильма и вариантов ответа
 local function LoadQuestion()
 
 	local contents_all = {}
@@ -176,9 +186,9 @@ local function LoadQuestion()
 	-- записываем в файл информацию о выбранном варианте
 	TableSave(contents_all,filePathLocal )
 	
-	-- записываем таблицу повторов для последних 25 фильмов
-	if #replay_table > 25 then
-		for j = #replay_table,26,-1 do
+	-- записываем таблицу повторов для последних 100 фильмов
+	if #replay_table > 100 then
+		for j = #replay_table,101,-1 do
 			table.remove(replay_table,j)
 		end
 		TableSave(replay_table,replay_tablePath )
@@ -295,9 +305,9 @@ function LoadCoins()
 		file:close()
 	else
 		local file, errorString = io.open( filePathCoins, "wb" )
-		file:write( "5" )
+		file:write( "2" )
 		file:close()
-		coins = 5
+		coins = 2
 	end
 	if coins == 0 then
 		coins = 1
@@ -508,7 +518,7 @@ local function ChooseSize(stringName)
 	return size
 end
 
--- Запускается при ошибке
+-- Запускается при выборе неправильного ответа
 local function endGame()
 	print( "Неправильно!")
 	appodeal.hide( "banner" )
@@ -628,7 +638,6 @@ local function handleButtonEvent( event )
 			variant4Button:setEnabled(false)
 			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, continueGame, 1 )
-			-- continueGame()
 		else
 			GenerateRedButton( buttonLabel )
 			variant1Button:setEnabled(false)
@@ -637,12 +646,11 @@ local function handleButtonEvent( event )
 			variant4Button:setEnabled(false)
 			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, endGame, 1 )
-			-- endGame()
 		end
     end
 end
 
--- активация и подсказки 50:50
+-- логика работы подсказки 50:50
 local function hint50ButtonEvent( event )
 	local buttonId = event.target.id
 	local deleteButtonl
@@ -674,29 +682,47 @@ local function hint50ButtonEvent( event )
 		end
 		used50 = true
 		UpdateHints()
-		-- grayButton = widget.newButton(
-			-- {
-				-- x = display.contentCenterX,
-				-- y = display.contentCenterY*1.25,
-				-- width = 192,
-				-- height = 86,
-				-- defaultFile = "img/buttonCircle_gray.png",
-				-- overFile = "img/buttonCircle_gray.png",
-				-- id = "hint50Button",
-				-- label = "50:50",
-				-- font = native.systemFontBold,
-				-- fontSize = 46,
-				-- labelColor = { default = { 0.6, 0.6, 0.6 }, over = { 0.6, 0.6, 0.6 } },
-				-- labelAlign = "center",
-			-- }
-		-- )
-		-- sceneGroup:insert( grayButton )
     end
 end
 
--- подсказки (пока что только 50:50)
+-- Получение монет из серой подсказки
+local function grayHints50ButtonEvent( event )
+    if ( "ended" == event.phase ) then
+		if appodeal.isLoaded( "rewardedVideo" ) then
+			appodeal.show( "rewardedVideo" )
+			timer.performWithDelay( 1000, function() local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } ) end, 1 )			
+			coins = coins+2
+			SaveCoins()
+			UpdateBar()
+			hint50Button = widget.newButton(
+				{
+					x = display.contentCenterX,
+					y = display.contentCenterY*1.25,
+					width = 192,
+					height = 86,
+					defaultFile = "img/buttonCircle_free.png",
+					overFile = "img/buttonCircle_touch.png",
+					id = "hint50Button",
+					label = "50:50",
+					font = native.systemFontBold,
+					fontSize = 46,
+					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+					labelAlign = "center",
+					onEvent = hint50ButtonEvent
+				}
+			)			
+			sceneGroup:insert( hint50Button )
+		else
+			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
+		end
+		
+    end
+end
+
+-- вывод подсказок на экран (пока что только 50:50)
 function UpdateHints()
 	if coins > 0 and used50 == false then
+	-- активная подсказка
 		hint50Button = widget.newButton(
 			{
 				x = display.contentCenterX,
@@ -714,7 +740,27 @@ function UpdateHints()
 				onEvent = hint50ButtonEvent
 			}
 		)
+	elseif coins <= 0 and used50 == false then
+	-- серая подсказка (нет монет)
+		hint50Button = widget.newButton(
+			{
+				x = display.contentCenterX,
+				y = display.contentCenterY*1.25,
+				width = 192,
+				height = 86,
+				defaultFile = "img/buttonCircle_gray.png",
+				overFile = "img/buttonCircle_gray.png",
+				id = "hint50Button",
+				label = "50:50",
+				font = native.systemFontBold,
+				fontSize = 46,
+				labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
+				labelAlign = "center",
+				onEvent = grayHints50ButtonEvent
+			}
+		)
 	else
+	-- серая подсказка (уже нажимали)
 		hint50Button = widget.newButton(
 			{
 				x = display.contentCenterX,
@@ -738,15 +784,16 @@ end
 -- получение монет через просмотр видео
 local function plusCoinsButtonEvent( event )
     if ( "ended" == event.phase ) then
+		print("plusCoinsButtonEvent")
 		if appodeal.isLoaded( "rewardedVideo" ) then
 			appodeal.show( "rewardedVideo" )
-			local alert = native.showAlert( "Поздравляем!", "За просмотр видео вы получили 2 монеты!", { "Превосходно!" } )
+			timer.performWithDelay( 1000, function() local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } ) end, 1 )		
 			coins = coins+2
 			SaveCoins()
 			UpdateBar()
 			UpdateHints()
 		else
-			local alert = native.showAlert( "Ошибка!", "Возможно, отсутствует интернет. Попробуйте запросить рекламу позже", { "Хорошо" } )
+			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
 		end
 		
     end
@@ -764,6 +811,7 @@ local function adListener( event )
 
     if ( event.phase == "init" ) then  -- Successful initialization
 		-- appodeal.show( "banner", {yAlign="bottom"} )
+		appodeal.setUserDetails( { userId = user_id } )
 		appodeal.load( "interstitial" )
 		appodeal.load( "rewardedVideo" )
 		
