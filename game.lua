@@ -568,7 +568,7 @@ local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
 	rateUsCounter = rateUsCounter+1
-	if rateUsCounter == 2 then
+	if rateUsCounter == 20 then
 		-- Проверяем, ставил ли игрок оценку/отзыв
 		local file_rateUs, errorString = io.open( filePathRateUs, "rb" )
 		if file_rateUs then
