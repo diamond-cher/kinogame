@@ -4,6 +4,8 @@
 --
 -----------------------------------------------------------------------------------------
 
+rateUsCounter = 0
+
 -- Your code here
 local composer = require( "composer" )
  

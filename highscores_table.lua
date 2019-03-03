@@ -26,10 +26,6 @@ local function loadScores()
 		io.close( file )
 		scoresTable = json.decode( contents )
 	end
-
-	if ( scoresTable == nil or #scoresTable == 0 ) then
-		scoresTable = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
-	end
 end
 
 
@@ -92,44 +88,51 @@ function scene:create( event )
 	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth+220, display.contentHeight+220 )
     background.x = display.contentCenterX
     background.y = display.contentCenterY
-	local highScoresHeader = display.newText( sceneGroup, "Таблица рекордов", display.contentCenterX, 100, native.systemFont, 64 )
-	highScoresHeader:setFillColor( 0, 0, 0 )
 
-	for i = 1, 10 do
-		if ( scoresTable[i] ) then
-			local yPos = 150 + ( i * 76 )
 
-			local rankNum = display.newText( sceneGroup, i .. ")", display.contentCenterX-50, yPos, native.systemBolt, 54 )
-			rankNum:setFillColor( 0, 0, 0 )
-			rankNum.anchorX = 1
+	if ( scoresTable == nil or #scoresTable == 0 ) then
+		local highScoresHeader = display.newText( sceneGroup, "У вас пока что нет рекордов", display.contentCenterX, 100, native.systemFont, 64 )
+		highScoresHeader:setFillColor( 0, 0, 0 )
+	else
+		local highScoresHeader = display.newText( sceneGroup, "Таблица рекордов", display.contentCenterX, 100, native.systemFont, 64 )
+		highScoresHeader:setFillColor( 0, 0, 0 )
 
-			local thisScore = display.newText( sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, native.systemFont, 54 )
-			if i == j then
-				thisScore:setFillColor( 1, 0, 0 )
-			else
-				thisScore:setFillColor( 0, 0, 0 )
+		for i = 1, 10 do
+			if ( scoresTable[i] ) then
+				local yPos = 150 + ( i * 76 )
+
+				local rankNum = display.newText( sceneGroup, i .. ")", display.contentCenterX-50, yPos, native.systemBolt, 54 )
+				rankNum:setFillColor( 0, 0, 0 )
+				rankNum.anchorX = 1
+
+				local thisScore = display.newText( sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, native.systemFont, 54 )
+				if i == j then
+					thisScore:setFillColor( 1, 0, 0 )
+				else
+					thisScore:setFillColor( 0, 0, 0 )
+				end
+				thisScore.anchorX = 0
 			end
-			thisScore.anchorX = 0
 		end
-	end
 
-	local menuButton = widget.newButton(
-			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.5+128,
-				width = display.contentCenterX,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
-				id = "highScoresButton",
-				label = "Меню",
-				font = native.systemFontBold,
-				fontSize = 64,
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
-				onEvent = gotoMenu
-			}
-		)
-	sceneGroup:insert( menuButton )
+		local menuButton = widget.newButton(
+				{
+					x = display.contentCenterX,
+					y = display.contentCenterY*1.5+128,
+					width = display.contentCenterX,
+					height = 120,
+					defaultFile = "img/button_free.png",
+					overFile = "img/button_touch.png",
+					id = "highScoresButton",
+					label = "Меню",
+					font = native.systemFontBold,
+					fontSize = 64,
+					labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+					onEvent = gotoMenu
+				}
+			)
+		sceneGroup:insert( menuButton )
+	end
 end
 
 

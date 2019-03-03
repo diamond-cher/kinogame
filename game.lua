@@ -27,6 +27,7 @@ local replay_tablePath = system.pathForFile( "replay_table.xml", system.Document
 local score = 0
 local coins
 local used50 = false
+local lives = 3
 
 local scoreText
 local coinsText
@@ -37,6 +38,7 @@ local filePath1 = system.pathForFile ("films1.xml", system.ResourceDirectory)
 local filePathLocal = system.pathForFile ("films.xml", system.DocumentsDirectory)
 local filePathUpdates = system.pathForFile ("updates1.xml", system.DocumentsDirectory)
 local filePathCoins = system.pathForFile ("coins.xml", system.DocumentsDirectory)
+local filePathRateUs = system.pathForFile ("rateUs.xml", system.DocumentsDirectory)
 
 -- переменные для рекламы
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
@@ -403,15 +405,35 @@ end
 --Обновляем бар сверху
 local function UpdateBar()
 
-	local scoreText = display.newText( sceneGroup, "Угадано: " .. score, 40, 100, native.systemFont, 48 )
+	local scoreText = display.newText( sceneGroup, "Счёт: " .. score, 40, 100, native.systemFont, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
 	scoreText.anchorX = 0
 	
+	local hearsBar1 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	hearsBar1.x = display.contentCenterX-120
+	hearsBar1.y = 100
+	local hearsBar2 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	hearsBar2.x = display.contentCenterX-20
+	hearsBar2.y = 100
+	local hearsBar3 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	hearsBar3.x = display.contentCenterX+80
+	hearsBar3.y = 100
+	if lives == 2 then
+		display.remove( hearsBar3 )
+	elseif lives == 1 then
+		display.remove( hearsBar3 )
+		display.remove( hearsBar2 )
+	elseif lives == 0 then
+		display.remove( hearsBar3 )
+		display.remove( hearsBar2 )
+		display.remove( hearsBar1 )
+	end
+	
 	local coinsBar = display.newImageRect( sceneGroup, "coins_bar.png", 96, 96 )
-	coinsBar.x = display.contentCenterX+140
+	coinsBar.x = display.contentCenterX+180
 	coinsBar.y = 100
 	display.remove( coinsText )
-	coinsText = display.newText( sceneGroup, coins, display.contentCenterX+200, 100, native.systemFont, 48 )
+	coinsText = display.newText( sceneGroup, coins, display.contentCenterX+230, 100, native.systemFont, 48 )
 	coinsText:setFillColor( 0, 0, 0 )
 	coinsText.anchorX = 0
 	
@@ -518,6 +540,16 @@ local function ChooseSize(stringName)
 	return size
 end
 
+-- проверяем, хватает ли жизней для дальнейшей игры
+local function checkLives()
+	if lives <= 0 then
+		composer.removeScene( "game" )
+		composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
+	else
+		composer.removeScene( "game", true )
+		composer.gotoScene( "game" )
+	end
+end
 -- Запускается при выборе неправильного ответа
 local function endGame()
 	print( "Неправильно!")
@@ -525,18 +557,34 @@ local function endGame()
 	composer.setVariable( "finalScore", score )
 	if adCounter >= 5 then
 		appodeal.show( "interstitial")
+		timer.performWithDelay( 1000, checkLives, 1 )
+	else
+		checkLives()
 	end
-	composer.removeScene( "game" )
-	composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
 end
 
 -- Запускается при выборе правильного ответа
 local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
-	print( "Правильно!")
-	composer.removeScene( "game", true )
-	composer.gotoScene( "game" )
+	rateUsCounter = rateUsCounter+1
+	if rateUsCounter == 2 then
+		-- Проверяем, ставил ли игрок оценку/отзыв
+		local file_rateUs, errorString = io.open( filePathRateUs, "rb" )
+		if file_rateUs then
+			file_rateUs:close()
+			print( "Правильно!")
+			composer.removeScene( "game", true )
+			composer.gotoScene( "game" )
+		else
+			composer.showOverlay( "rate_us" )
+			print( "rate_us!")
+		end
+	else
+		print( "Правильно!")
+		composer.removeScene( "game", true )
+		composer.gotoScene( "game" )
+	end
 end
 
 -- при правильном ответе создаём зелёную кнопку поверх обычной
@@ -639,6 +687,8 @@ local function handleButtonEvent( event )
 			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, continueGame, 1 )
 		else
+			lives = lives-1
+			UpdateBar()
 			GenerateRedButton( buttonLabel )
 			variant1Button:setEnabled(false)
 			variant2Button:setEnabled(false)
@@ -685,12 +735,14 @@ local function hint50ButtonEvent( event )
     end
 end
 
+
 -- Получение монет из серой подсказки
 local function grayHints50ButtonEvent( event )
     if ( "ended" == event.phase ) then
 		if appodeal.isLoaded( "rewardedVideo" ) then
 			appodeal.show( "rewardedVideo" )
-			timer.performWithDelay( 1000, function() local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } ) end, 1 )			
+			timer.performWithDelay( 1000, function()
+			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )			
 			coins = coins+2
 			SaveCoins()
 			UpdateBar()
@@ -711,7 +763,7 @@ local function grayHints50ButtonEvent( event )
 					onEvent = hint50ButtonEvent
 				}
 			)			
-			sceneGroup:insert( hint50Button )
+			sceneGroup:insert( hint50Button ) end, 1 )
 		else
 			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
 		end
@@ -787,11 +839,12 @@ local function plusCoinsButtonEvent( event )
 		print("plusCoinsButtonEvent")
 		if appodeal.isLoaded( "rewardedVideo" ) then
 			appodeal.show( "rewardedVideo" )
-			timer.performWithDelay( 1000, function() local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } ) end, 1 )		
+			timer.performWithDelay( 1000, function()
+			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )
 			coins = coins+2
 			SaveCoins()
 			UpdateBar()
-			UpdateHints()
+			UpdateHints() end, 1 )		
 		else
 			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
 		end
@@ -840,7 +893,7 @@ function scene:create( event )
 	end
 	
 	-- Code here runs when the scene is first created but has not yet appeared on screen
-	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth+50, display.contentHeight+50 )
+	local background = display.newImageRect( sceneGroup, "background.png", display.contentWidth+220, display.contentHeight+220 )
 	background.x = display.contentCenterX
 	background.y = display.contentCenterY
 	
@@ -930,16 +983,16 @@ function scene:create( event )
 		UpdateHints()
 		plusCoinsButton = widget.newButton(
 				{
-					x = display.contentCenterX*2-65,
+					x = display.contentCenterX*2-60,
 					y = 100,
-					width = 80,
+					width = 100,
 					height = 80,
 					defaultFile = "img/button_free.png",
 					overFile = "img/button_touch.png",
 					id = "plusCoinsButton",
 					font = native.systemFontBold,
-					label = "+",
-					fontSize = 100,
+					label = "free",
+					fontSize = 40,
 					labelColor = { default = { 0, 0, 0}, over = { 1, 0, 0 } },
 					labelAlign = "center",
 					onEvent = plusCoinsButtonEvent
@@ -976,6 +1029,12 @@ function scene:show( event )
 	end
 end
 
+-- resume()
+function scene:resumeGame()
+    --code to resume game
+	rateUsCounter = rateUsCounter+1
+	continueGame()	
+end
 
 -- hide()
 function scene:hide( event )
