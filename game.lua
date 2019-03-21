@@ -22,6 +22,7 @@ local numbersFilmFalse = {}	-- таблица неправильных вари�
 local replay
 local replay_table = {}
 local replay_tablePath = system.pathForFile( "replay_table.xml", system.DocumentsDirectory )
+local fixStarWars = system.pathForFile( "fix_star_wars.xml", system.DocumentsDirectory )
 
 -- Initialize variables
 local score = 0
@@ -64,11 +65,25 @@ local function LoadQuestion()
 	local variant1_tmp, variant2_tmp, variant3_tmp
 	local complexity
 	used50 = false
+	local fixedStarWars = true -- переменная для исправления сраных звёздных войн
+	
+	-- костыль для исправления сраных звёздных войн
+	local file_fixStarWars, errorString = io.open( fixStarWars, "rb" )
+	if file_fixStarWars then
+		file_fixStarWars:close()
+	else
+		fixedStarWars = false
+		file_fixStarWars, errorString = io.open( fixStarWars, "w" )
+		file_fixStarWars:close()
+	end
 	
 	-- Проверяем, есть ли локальный файл. Если да, то работаем дальше с ним
 	local file, errorString = io.open( filePathLocal, "rb" )
-	if file then
+	-- отсюда тоже надо убрать костыль про звёздных войнов
+	if file and fixedStarWars then
 		filePath = filePathLocal
+		file:close()
+	elseif file then
 		file:close()
 	end
 	
@@ -80,13 +95,18 @@ local function LoadQuestion()
 	
 	-- Добавляем в таблицу новые фильмы
 	local file_updates, errorString = io.open( filePathUpdates, "rb" )
-	if file_updates then
+	if file_updates and fixedStarWars then
 		file_updates:close()
 	else
+		-- ещё один кусок костыля от звёздных войн
+		if file_updates then
+			file_updates:close()
+		end
 		for line in io.lines(filePath1) do
 			contents_all[#contents_all+ 1] = line
 		end
 		file_updates, errorString = io.open( filePathUpdates, "w" )
+		print(errorString)
 		file_updates:close()
 	end
 	
