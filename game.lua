@@ -11,6 +11,7 @@ local scene = composer.newScene()
 -- -----------------------------------------------------------------------------------
 
 local nameFilmTrue -- название загаданного фильма
+local factor = 1 -- множитель для подсчета символов в строке (русский символ идёт за 2 английских)
 local pictureFilmTrue = "img/Shoushenko1.png" -- кадр из загаданного фильма (работает)
 local variant1 = "Вариант 1"
 local variant2 = "Вариант 2"
@@ -148,10 +149,17 @@ local function LoadQuestion()
 	while replay == true do
 		i = math.random(1,#contents)
 		str = contents[i]
-		nameFilmTrue = string.match(str, "name_rus='(.-)'")			
+		local ru_nameFilmTrue = string.match(str, "name_rus='(.-)'")
+		-- определяем, на каком языке показывается название правильного фильма
+		if location == "rus" then
+			factor = 2
+			nameFilmTrue = string.match(str, "name_rus='(.-)'")	
+		else
+			nameFilmTrue = string.match(str, "name_eng='(.-)'")
+		end
 		if replay_table ~= {} and #replay_table>0 then
 			for j=1,#replay_table do
-				if nameFilmTrue == replay_table[j] then
+				if ru_nameFilmTrue == replay_table[j] then
 					replay = true
 					break
 				else
@@ -162,7 +170,7 @@ local function LoadQuestion()
 			replay = false
 		end
 		if replay == false then
-			table.insert( replay_table, 1, nameFilmTrue )
+			table.insert( replay_table, 1, ru_nameFilmTrue )
 		end
 	end
 	
@@ -227,12 +235,19 @@ local function LoadQuestion()
 		while v1 == v2 or v1 == v3 or v2 == v3 or v1 == count[i] or v2 == count[i] or v3 == count[i] do
 			v1,v2,v3 = math.random(1, #contents_all), math.random(1, #contents_all), math.random(1, #contents_all)
 		end
-		variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
-		variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
-		variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
-		-- print("Вариант 1_tmp: "..variant1_tmp)
-		-- print("Вариант 2_tmp: "..variant2_tmp)
-		-- print("Вариант 3_tmp: "..variant3_tmp)
+		-- Определяем локализацию неправильных вариантов фильма
+		if location == "rus" then
+			variant1_tmp = string.match(contents_all[v1], "name_rus='(.-)'")
+			variant2_tmp = string.match(contents_all[v2], "name_rus='(.-)'")
+			variant3_tmp = string.match(contents_all[v3], "name_rus='(.-)'")
+		else
+			variant1_tmp = string.match(contents_all[v1], "name_eng='(.-)'")
+			variant2_tmp = string.match(contents_all[v2], "name_eng='(.-)'")
+			variant3_tmp = string.match(contents_all[v3], "name_eng='(.-)'")
+		end
+		print("Вариант 1_tmp: "..v1)
+		print("Вариант 2_tmp: "..v2)
+		print("Вариант 3_tmp: "..v3)
 	end
 	
 	-- Определяем, какой кадр будет показан для фильма
@@ -422,12 +437,22 @@ function TableSave(  tbl,filename )
   file:close()
 end
 
+
+-- накручиваем очки по тапу по ним (читерская функция)
+local function cheatButton( event )
+	print( "Читер!")
+	composer.removeScene( "game", true )
+	composer.gotoScene( "game" )
+end
+
 --Обновляем бар сверху
 local function UpdateBar()
 
 	local scoreText = display.newText( sceneGroup, "Счёт: " .. score, 40, 100, native.systemFont, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
 	scoreText.anchorX = 0
+	-- читерская прохождение уровня
+	scoreText:addEventListener( "tap", cheatButton )
 	
 	local hearsBar1 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
 	hearsBar1.x = display.contentCenterX-120
@@ -466,14 +491,11 @@ local function SplitLongString(stringName)
 	local count = string.len(stringName)
 	local number_s = stringName:find("%s")
 	-- если длина строки больше 12 символов, то делаем перенос
-	if count > 24 and number_s then
-		-- если первое слово больше 11 или 7 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
-		if number_s > 22 and count < 60 then
+	if count > 12*factor and number_s then
+		-- если первое слово больше 12 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
+		if number_s > 11*factor and count < 30*factor then
 			stringName = stringName:gsub("%s+", "\n", 1)
 			print( "Перенос здесь: " ..number_s )
-		-- elseif number_s > 14 and count < 60 then
-			-- stringName = stringName:gsub("%s+", "\n", 1)
-			-- print( "Перенос здесь: " ..number_s )
 		else
 			-- ищем середину фразы
 			i = math.floor(count/2)
@@ -481,7 +503,7 @@ local function SplitLongString(stringName)
 			local number_s = stringName:find("%s", i)
 			local revers_number_s = string.find(string.reverse( stringName ), "%s", i)
 			if revers_number_s then
-				print ("revers_number_s: "..revers_number_s)
+				print ("Ближайший к середине пробел здесь: "..revers_number_s)
 				if number_s then
 					if number_s-i > revers_number_s-i then
 						i = i - revers_number_s-i - 1
@@ -490,20 +512,13 @@ local function SplitLongString(stringName)
 					i = i - revers_number_s-i - 1
 				end
 			end
-			-- for j=0,i do
-				-- local j_i = i-j
-				-- if stringName:match ("%s", j_i) then
-					-- i = j_i
-					-- break
-				-- end
-			-- end
-			print( "Перенос после этого символа: " ..i )
+			-- print( "Перенос после этого символа: " ..i )
 			local stringName1 = stringName:sub(1,i-1)
 			local stringName2 = stringName:sub(i)
 			
 			
 			-- условие, чтобы верхняя часть не вылезала за рамки из-за своего размера
-			if string.len(stringName1) < 40 then
+			if string.len(stringName1) < 20*factor then
 				stringName2 = stringName2:gsub("%s+", "\n", 1)
 				stringName = stringName1..stringName2
 			else
@@ -519,18 +534,26 @@ local function SplitLongString(stringName)
 		-- чтобы перенесённая и оставшаяся фраза были примерно по центру, добавляем в начало наименьшей части пробелы
 		local number_n = stringName:find("\n")
 		if number_n then
-			print( "Нашлась n здесь: "..number_n )
+			-- print( "Нашлась n здесь: "..number_n )
 			local stringName1 = stringName:sub(1,number_n-1)
 			local stringName2 = stringName:sub(number_n+1)
 			local symbol_s = " "
+			local sectretFactor = 1 -- из-за большой разницы в ширине английсих символов в английском языке надо после подсчёта кол-ва нужных пробелов, умножать на 2
+			if factor == 1 then
+				sectretFactor = 2
+			end
 			if string.len(stringName1) > string.len(stringName2) then
 				local difference = string.len(stringName1) - string.len(stringName2)
-				local quantity = math.floor(difference/2)
+				local quantity = math.floor(difference/2)*sectretFactor
 				stringName2 = "\n"..string.rep(symbol_s, quantity)..stringName2
+				print( "Разница между 1 и 2 строками: "..difference )
+				print( "Кол-во пробелов, которое ставим: "..quantity )
 			elseif string.len(stringName1) < string.len(stringName2) then
 				local difference = string.len(stringName2) - string.len(stringName1)
-				local quantity = math.floor(difference/2)
+				local quantity = math.floor(difference/2)*sectretFactor
 				stringName1 = string.rep(symbol_s, quantity)..stringName1.."\n"
+				print( "Разница между 1 и 2 строками: "..difference )
+				print( "Кол-во пробелов, которое ставим: "..quantity )
 			elseif string.len(stringName1) == string.len(stringName2) then
 				stringName1 = stringName1.."\n"
 			end
@@ -543,19 +566,33 @@ end
 -- Меняем размер текста в кнопке в зависимости от длины
 local function ChooseSize(stringName)
 	local size = 40
-	if string.len(stringName) > 75 then
-		size = 23
-	elseif string.len(stringName) > 70 then
-		size = 27
-	elseif string.len(stringName) > 60 then
-		size = 31 -- 74 и больше надо оставить такой размер
-	elseif string.len(stringName) > 20 then
-		size = 35
-	elseif string.len(stringName) > 10 then
-		size = 38
+	if factor == 2 then
+		if string.len(stringName) > 37*factor then
+			size = 23
+		elseif string.len(stringName) > 35*factor then
+			size = 27
+		elseif string.len(stringName) > 30*factor then
+			size = 31 -- 74 и больше надо оставить такой размер
+		elseif string.len(stringName) > 10*factor then
+			size = 35
+		elseif string.len(stringName) > 5*factor then
+			size = 38
+		else
+			size = 40
+		end
 	else
-		size = 40
-	end	
+		if string.len(stringName) > 35 then
+			size = 29
+		elseif string.len(stringName) > 30 then
+			size = 31 -- 74 и больше надо оставить такой размер
+		elseif string.len(stringName) > 15 then
+			size = 35
+		elseif string.len(stringName) > 10 then
+			size = 38
+		else
+			size = 40
+		end
+	end
 	print( 'Размер текста "'..stringName..'" - '..size )
 	return size
 end
@@ -872,13 +909,6 @@ local function plusCoinsButtonEvent( event )
     end
 end
 
--- накручиваем очки по тапу по ним (читерская функция)
-local function cheatButton( event )
-    -- score = score+1
-    -- scoreText.text = "Score: " .. score
-	continueGame()
-end
-
 -- функция для рекламы
 local function adListener( event )
 
@@ -1028,7 +1058,6 @@ function scene:create( event )
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
 		print("Вариант 4: "..variant4)
-		-- scoreText:addEventListener( "tap", cheatButton )
 	end
 	appodeal.init( adListener, { appKey=appKey } )
 	appodeal.show( "banner", {yAlign="bottom"} )

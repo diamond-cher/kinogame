@@ -4,6 +4,7 @@ local widget = require( "widget" )
 
 local scene = composer.newScene()
 
+location = "eng"
 -- -----------------------------------------------------------------------------------
 -- Code outside of the scene event functions below will only be executed ONCE unless
 -- the scene is removed entirely (not recycled) via "composer.removeScene()"
