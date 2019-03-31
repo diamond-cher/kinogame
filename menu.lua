@@ -5,6 +5,7 @@ local widget = require( "widget" )
 local scene = composer.newScene()
 
 location = "eng"
+textPlay = "Играть"
 -- -----------------------------------------------------------------------------------
 -- Code outside of the scene event functions below will only be executed ONCE unless
 -- the scene is removed entirely (not recycled) via "composer.removeScene()"
@@ -44,39 +45,54 @@ function scene:create( event )
 	-- playButton:setFillColor( 0.82, 0.86, 1 )
 	local playButton = widget.newButton(
 			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.5-64,
-				width = display.contentCenterX,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				x = display.contentCenterX+13,
+				y = display.contentCenterY+160,
+				width = 483,
+				height = 211,
+				defaultFile = "interface/menu/button_Play_free.png",
+				overFile = "interface/menu/button_Play_press.png",
 				id = "playButton",
-				label = "Играть",
-				font = native.systemFontBold,
-				fontSize = 64,
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				label = textPlay,
+				font = "Monly-Serif-Light.otf",
+				labelYOffset = -8,
+				labelXOffset = -10,
+				fontSize = 120,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				onEvent = gotoGame
 			}
 		)
 		
 	local highScoresButton = widget.newButton(
 			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.5+128,
-				width = display.contentCenterX,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				x = display.contentCenterX-100,
+				y = display.contentCenterY+342,
+				width = 259,
+				height = 208,
+				defaultFile = "interface/menu/button_Scores_free.png",
+				overFile = "interface/menu/button_Scores_press.png",
 				id = "highScoresButton",
-				label = "Таблица рекордов",
+				onEvent = gotoHighScores
+			}
+		)
+	local languageButton = widget.newButton(
+			{
+				x = display.contentCenterX+128,
+				y = display.contentCenterY+342,
+				width = 248,
+				height = 208,
+				defaultFile = "interface/menu/button_Language_free.png",
+				overFile = "interface/menu/button_Language_press.png",
+				id = "languageButton",
+				label = location,
 				font = native.systemFontBold,
 				fontSize = 40,
 				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
-				onEvent = gotoHighScores
+				onEvent = changeLanguage
 			}
 		)
 	sceneGroup:insert( playButton )
 	sceneGroup:insert( highScoresButton )
+	sceneGroup:insert( languageButton )
 
 	-- playButton:addEventListener( "tap", gotoGame )
 	-- highScoresButton:addEventListener( "tap", gotoHighScores )

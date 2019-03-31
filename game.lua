@@ -581,7 +581,9 @@ local function ChooseSize(stringName)
 			size = 40
 		end
 	else
-		if string.len(stringName) > 35 then
+		if string.len(stringName) > 40 then
+			size = 26
+		elseif string.len(stringName) > 35 then
 			size = 29
 		elseif string.len(stringName) > 30 then
 			size = 31 -- 74 и больше надо оставить такой размер
@@ -656,24 +658,26 @@ local function GenerateGreenButton( self )
 		top_position = display.contentCenterY*1.35
 	elseif self == variant3 then
 		left_position = 20
-		top_position = display.contentCenterY*1.35+140
+		top_position = display.contentCenterY*1.35+160
 	else
 		left_position = display.contentCenterX+10
-		top_position = display.contentCenterY*1.35+140
+		top_position = display.contentCenterY*1.35+160
 	end
     greenButton = widget.newButton(
 			{
 				left = left_position,
 				top = top_position,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_green.png",
-				overFile = "img/button_green.png",
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_green.png",
+				overFile = "interface/game/button_green.png",
 				id = "greenButton",
 				label = SplitLongString(self),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(self),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				isEnabled  = false
 			}
@@ -693,24 +697,26 @@ local function GenerateRedButton( self )
 		top_position = display.contentCenterY*1.35
 	elseif self == variant3 then
 		left_position = 20
-		top_position = display.contentCenterY*1.35+140
+		top_position = display.contentCenterY*1.35+160
 	else
 		left_position = display.contentCenterX+10
-		top_position = display.contentCenterY*1.35+140
+		top_position = display.contentCenterY*1.35+160
 	end
     redButton = widget.newButton(
 			{
 				left = left_position,
 				top = top_position,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_red.png",
-				overFile = "img/button_red.png",
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_red.png",
+				overFile = "interface/game/button_red.png",
 				id = "redButton",
 				label = SplitLongString(self),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(self),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				isEnabled  = false
 			}
@@ -815,7 +821,7 @@ local function grayHints50ButtonEvent( event )
 					label = "50:50",
 					font = native.systemFontBold,
 					fontSize = 46,
-					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.3, 0.3, 0.3} },
 					labelAlign = "center",
 					onEvent = hint50ButtonEvent
 				}
@@ -965,15 +971,17 @@ function scene:create( event )
 			{
 				left = 20,
 				top = display.contentCenterY*1.35,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_free.png",
+				overFile = "interface/game/button_touch.png",
 				id = "variant1ButtonId",
 				label = SplitLongString(variant1),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant1),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -982,15 +990,17 @@ function scene:create( event )
 			{
 				left = display.contentCenterX+10,
 				top = display.contentCenterY*1.35,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_free.png",
+				overFile = "interface/game/button_touch.png",
 				id = "variant2ButtonId",
 				label = SplitLongString(variant2),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant2),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -998,16 +1008,18 @@ function scene:create( event )
 		variant3Button = widget.newButton(
 			{
 				left = 20,
-				top = display.contentCenterY*1.35+140,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				top = display.contentCenterY*1.35+160,
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_free.png",
+				overFile = "interface/game/button_touch.png",
 				id = "variant3ButtonId",
 				label = SplitLongString(variant3),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant3),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
@@ -1015,16 +1027,18 @@ function scene:create( event )
 		variant4Button = widget.newButton(
 			{
 				left = display.contentCenterX+10,
-				top = display.contentCenterY*1.35+140,
-				width = display.contentCenterX-30,
-				height = 120,
-				defaultFile = "img/button_free.png",
-				overFile = "img/button_touch.png",
+				top = display.contentCenterY*1.35+160,
+				width = display.contentCenterX,
+				height = 185,
+				defaultFile = "interface/game/button_free.png",
+				overFile = "interface/game/button_touch.png",
 				id = "variant4ButtonId",
 				label = SplitLongString(variant4),
 				font = native.systemFontBold,
 				fontSize = ChooseSize(variant4),
-				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 1, 0, 0 } },
+				labelYOffset = -8,
+				labelXOffset = -10,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
 				onEvent = handleButtonEvent
 			}
