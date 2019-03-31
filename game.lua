@@ -31,8 +31,8 @@ local coins
 local used50 = false
 local lives = 3
 
-local scoreText
-local coinsText
+local scoreText = "Score: "
+local livesText
 
 -- файлы
 local filePath = system.pathForFile ("films.xml", system.ResourceDirectory)
@@ -447,40 +447,44 @@ end
 
 --Обновляем бар сверху
 local function UpdateBar()
-
-	local scoreText = display.newText( sceneGroup, "Счёт: " .. score, 40, 100, native.systemFont, 48 )
+	
+	if location == "eng" then
+		scoreText = "Score: "
+	else
+		scoreText = "Счёт: "
+	end
+	local scoreText = display.newText( sceneGroup, scoreText .. score, display.contentCenterX/2, 100, native.systemFontBold, 48 )
 	scoreText:setFillColor( 0, 0, 0 )
-	scoreText.anchorX = 0
+	-- scoreText.anchorX = 0
 	-- читерская прохождение уровня
 	scoreText:addEventListener( "tap", cheatButton )
 	
-	local hearsBar1 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	hearsBar1.x = display.contentCenterX-120
-	hearsBar1.y = 100
-	local hearsBar2 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	hearsBar2.x = display.contentCenterX-20
-	hearsBar2.y = 100
-	local hearsBar3 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	hearsBar3.x = display.contentCenterX+80
-	hearsBar3.y = 100
-	if lives == 2 then
-		display.remove( hearsBar3 )
-	elseif lives == 1 then
-		display.remove( hearsBar3 )
-		display.remove( hearsBar2 )
-	elseif lives == 0 then
-		display.remove( hearsBar3 )
-		display.remove( hearsBar2 )
-		display.remove( hearsBar1 )
-	end
+	local heart = display.newImageRect( sceneGroup, "heart_bar.png", 80, 80 )
+	heart.x = display.contentCenterX+display.contentCenterX/2-50
+	heart.y = 100
 	
-	local coinsBar = display.newImageRect( sceneGroup, "coins_bar.png", 96, 96 )
-	coinsBar.x = display.contentCenterX+180
-	coinsBar.y = 100
-	display.remove( coinsText )
-	coinsText = display.newText( sceneGroup, coins, display.contentCenterX+230, 100, native.systemFont, 48 )
-	coinsText:setFillColor( 0, 0, 0 )
-	coinsText.anchorX = 0
+	display.remove( livesText )
+	livesText = display.newText( sceneGroup, lives, display.contentCenterX+display.contentCenterX/2+40, 100, native.systemFontBold, 48 )
+	scoreText:setFillColor( 0, 0, 0 )
+	-- local hearsBar1 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	-- hearsBar1.x = display.contentCenterX-120
+	-- hearsBar1.y = 100
+	-- local hearsBar2 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	-- hearsBar2.x = display.contentCenterX-20
+	-- hearsBar2.y = 100
+	-- local hearsBar3 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
+	-- hearsBar3.x = display.contentCenterX+80
+	-- hearsBar3.y = 100
+	-- if lives == 2 then
+		-- display.remove( hearsBar3 )
+	-- elseif lives == 1 then
+		-- display.remove( hearsBar3 )
+		-- display.remove( hearsBar2 )
+	-- elseif lives == 0 then
+		-- display.remove( hearsBar3 )
+		-- display.remove( hearsBar2 )
+		-- display.remove( hearsBar1 )
+	-- end
 	
 	-- coinsBar:addEventListener( "tap", function () native.showAlert( "Как получить монеты", "Монеты выдаются при угадывании фильмов. Ещё их можно получить посмотрев рекламу.", { "Понятно" } ) end )
 end
@@ -771,7 +775,6 @@ local function hint50ButtonEvent( event )
     if ( "ended" == event.phase ) then
 		coins = coins-1
 		SaveCoins()
-		UpdateBar()
 		while deleteButtonl == deleteButton2 do
 			deleteButtonl, deleteButton2 = numbersFilmFalse[math.random(1, #numbersFilmFalse)], numbersFilmFalse[math.random(1, #numbersFilmFalse)]
 		end
@@ -808,19 +811,20 @@ local function grayHints50ButtonEvent( event )
 			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )			
 			coins = coins+2
 			SaveCoins()
-			UpdateBar()
 			hint50Button = widget.newButton(
 				{
-					x = display.contentCenterX,
-					y = display.contentCenterY*1.25,
+					x = display.contentCenterX-98,
+					y = display.contentCenterY*1.25+10,
 					width = 192,
-					height = 86,
-					defaultFile = "img/buttonCircle_free.png",
-					overFile = "img/buttonCircle_touch.png",
+					height = 130,
+					defaultFile = "interface/game/button_green.png",
+					overFile = "interface/game/button_touch.png",
 					id = "hint50Button",
 					label = "50:50",
 					font = native.systemFontBold,
 					fontSize = 46,
+					labelYOffset = -4,
+					labelXOffset = -5,
 					labelColor = { default = { 0.1, 0.0, 0.9}, over = { 0.3, 0.3, 0.3} },
 					labelAlign = "center",
 					onEvent = hint50ButtonEvent
@@ -836,21 +840,24 @@ end
 
 -- вывод подсказок на экран (пока что только 50:50)
 function UpdateHints()
+	display.remove( hint50Button )
 	if coins > 0 and used50 == false then
 	-- активная подсказка
 		hint50Button = widget.newButton(
 			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.25,
+				x = display.contentCenterX-98,
+				y = display.contentCenterY*1.25+10,
 				width = 192,
-				height = 86,
-				defaultFile = "img/buttonCircle_free.png",
-				overFile = "img/buttonCircle_touch.png",
+				height = 130,
+				defaultFile = "interface/game/button_green.png",
+				overFile = "interface/game/button_greenTouch.png",
 				id = "hint50Button",
 				label = "50:50",
 				font = native.systemFontBold,
 				fontSize = 46,
-				labelColor = { default = { 0.1, 0.0, 0.9}, over = { 1, 0, 0 } },
+				labelYOffset = -4,
+				labelXOffset = -5,
+				labelColor = { default = { 1, 1, 1}, over = { 0.9, 0.9, 0.9 } },
 				labelAlign = "center",
 				onEvent = hint50ButtonEvent
 			}
@@ -859,17 +866,19 @@ function UpdateHints()
 	-- серая подсказка (нет монет)
 		hint50Button = widget.newButton(
 			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.25,
+				x = display.contentCenterX-98,
+				y = display.contentCenterY*1.25+10,
 				width = 192,
-				height = 86,
-				defaultFile = "img/buttonCircle_gray.png",
-				overFile = "img/buttonCircle_gray.png",
+				height = 130,
+				defaultFile = "interface/game/button_green_gray.png",
+				overFile = "interface/game/button_green_gray.png",
 				id = "hint50Button",
 				label = "50:50",
 				font = native.systemFontBold,
 				fontSize = 46,
-				labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
+				labelYOffset = -4,
+				labelXOffset = -5,
+				labelColor = { default = { 0.9, 0.9, 0.9}, over = { 0.8, 0.8, 0.8} },
 				labelAlign = "center",
 				onEvent = grayHints50ButtonEvent
 			}
@@ -878,22 +887,41 @@ function UpdateHints()
 	-- серая подсказка (уже нажимали)
 		hint50Button = widget.newButton(
 			{
-				x = display.contentCenterX,
-				y = display.contentCenterY*1.25,
+				x = display.contentCenterX-98,
+				y = display.contentCenterY*1.25+10,
 				width = 192,
-				height = 86,
-				defaultFile = "img/buttonCircle_gray.png",
-				overFile = "img/buttonCircle_gray.png",
+				height = 130,
+				defaultFile = "interface/game/button_green_gray.png",
+				overFile = "interface/game/button_green_gray.png",
 				id = "hint50Button",
 				label = "50:50",
 				font = native.systemFontBold,
 				fontSize = 46,
-				labelColor = { default = { 0.6, 0.6, 0.6}, over = { 0.6, 0.6, 0.6 } },
+				labelYOffset = -4,
+				labelXOffset = -5,
+				labelColor = { default = { 0.9, 0.9, 0.9}, over = { 0.9, 0.9, 0.9} },
 				labelAlign = "center",
 			}
 		)
 	end
+	hint50Counter = widget.newButton(
+		{
+			x = display.contentCenterX-15,
+			y = display.contentCenterY*1.25-25,
+			width = 50,
+			height = 50,
+			defaultFile = "interface/game/button_circle.png",
+			overFile = "interface/game/button_circle.png",
+			id = "hint50Counter",
+			label = coins,
+			font = native.systemFontBold,
+			fontSize = 40,
+			labelColor = { default = { 0, 0, 0}, over = { 0, 0, 0} },
+			labelAlign = "center",
+		}
+	)
 	sceneGroup:insert( hint50Button )
+	sceneGroup:insert( hint50Counter )
 end
 
 -- получение монет через просмотр видео
@@ -906,7 +934,6 @@ local function plusCoinsButtonEvent( event )
 			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )
 			coins = coins+2
 			SaveCoins()
-			UpdateBar()
 			UpdateHints() end, 1 )		
 		else
 			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
@@ -964,8 +991,40 @@ function scene:create( event )
 	pictureFilm.x = display.contentCenterX
 	pictureFilm.y = display.contentCenterY/2+130
 	
+	local scoreBar = display.newImageRect( sceneGroup, "interface/game/button_green.png", display.contentCenterX/2+100, 100 )
+	scoreBar.x = display.contentCenterX/2
+	scoreBar.y = 100
+	scoreBar.alpha = 0.75
+	
+	local livesBar = display.newImageRect( sceneGroup, "interface/game/button_free.png", display.contentCenterX/2+100, 100 )
+	livesBar.x = display.contentCenterX+display.contentCenterX/2
+	livesBar.y = 100
+	livesBar.alpha = 0.75
+	
 	UpdateBar()
 	
+	UpdateHints()
+	plusCoinsButton = widget.newButton(
+			{
+				x = display.contentCenterX+86,
+				y = display.contentCenterY*1.25+10,
+				width = 130,
+				height = 130,
+				defaultFile = "interface/game/button_free.png",
+				overFile = "interface/game/button_touch.png",
+				id = "plusCoinsButton",
+				font = native.systemFontBold,
+				label = "+",
+				fontSize = 100,
+				labelYOffset = -4,
+				labelXOffset = -3,
+				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
+				labelAlign = "center",
+				onEvent = plusCoinsButtonEvent
+			}
+		)
+	sceneGroup:insert( plusCoinsButton )
+		
 	if variant1 ~= nil and variant2 ~= nil and variant3 ~= nil and variant4 ~= nil then
 		variant1Button = widget.newButton(
 			{
@@ -1044,30 +1103,11 @@ function scene:create( event )
 			}
 		)
 		
-		UpdateHints()
-		plusCoinsButton = widget.newButton(
-				{
-					x = display.contentCenterX*2-60,
-					y = 100,
-					width = 100,
-					height = 80,
-					defaultFile = "img/button_free.png",
-					overFile = "img/button_touch.png",
-					id = "plusCoinsButton",
-					font = native.systemFontBold,
-					label = "free",
-					fontSize = 40,
-					labelColor = { default = { 0, 0, 0}, over = { 1, 0, 0 } },
-					labelAlign = "center",
-					onEvent = plusCoinsButtonEvent
-				}
-			)
 		-- привязываем кнопки к сцене
 		sceneGroup:insert( variant1Button )
 		sceneGroup:insert( variant2Button )
 		sceneGroup:insert( variant3Button )
 		sceneGroup:insert( variant4Button )
-		sceneGroup:insert( plusCoinsButton )
 		print("Вариант 1: "..variant1)
 		print("Вариант 2: "..variant2)
 		print("Вариант 3: "..variant3)
