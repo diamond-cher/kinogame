@@ -31,7 +31,7 @@ local coins
 local used50 = false
 local lives = 3
 
-local scoreText = "Score: "
+local scoreText
 local livesText
 
 -- файлы
@@ -49,12 +49,24 @@ local user_id = system.getInfo( "deviceID" )
 
 -- переменные для текста 
 local goodAlertTitle_Ru = "Поздравляем!"
-local goodAlertBody_Ru = "За просмотр видео вы получили 2 монеты!"
+local goodAlertBody_Ru = "За просмотр видео вы получили 2 бесплатные подсказки!"
 local goodAlertButton_Ru = "Превосходно!"
 
 local badAlertTitle_Ru = "Ошибка!"
 local badAlertBody_Ru = "Возможно, отсутствует интернет. Попробуйте запросить рекламу позже"
 local badAlertButton_Ru = "Хорошо"
+
+local scoreText_Ru = "Счёт: "
+
+local goodAlertTitle_En = "Congratulations!"
+local goodAlertBody_En = "For watching the video you got 2 free hints!"
+local goodAlertButton_En = "Excellent!"
+
+local badAlertTitle_En = "Error!"
+local badAlertBody_En = "Perhaps there is no internet. Try to request ads later"
+local badAlertButton_En = "Ok"
+
+local scoreText_En = "Score: "
 -- Выбор кадра из фильма и вариантов ответа
 local function LoadQuestion()
 
@@ -449,13 +461,14 @@ end
 local function UpdateBar()
 	
 	if location == "eng" then
-		scoreText = "Score: "
+		scoreText = scoreText_En
 	else
-		scoreText = "Счёт: "
+		scoreText = scoreText_Ru
 	end
 	local scoreText = display.newText( sceneGroup, scoreText .. score, display.contentCenterX/2, 100, native.systemFontBold, 48 )
-	scoreText:setFillColor( 0, 0, 0 )
+	scoreText:setFillColor( 1, 1, 1 )
 	-- scoreText.anchorX = 0
+	
 	-- читерская прохождение уровня
 	scoreText:addEventListener( "tap", cheatButton )
 	
@@ -465,26 +478,7 @@ local function UpdateBar()
 	
 	display.remove( livesText )
 	livesText = display.newText( sceneGroup, lives, display.contentCenterX+display.contentCenterX/2+40, 100, native.systemFontBold, 48 )
-	scoreText:setFillColor( 0, 0, 0 )
-	-- local hearsBar1 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	-- hearsBar1.x = display.contentCenterX-120
-	-- hearsBar1.y = 100
-	-- local hearsBar2 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	-- hearsBar2.x = display.contentCenterX-20
-	-- hearsBar2.y = 100
-	-- local hearsBar3 = display.newImageRect( sceneGroup, "heart_bar.png", 96, 96 )
-	-- hearsBar3.x = display.contentCenterX+80
-	-- hearsBar3.y = 100
-	-- if lives == 2 then
-		-- display.remove( hearsBar3 )
-	-- elseif lives == 1 then
-		-- display.remove( hearsBar3 )
-		-- display.remove( hearsBar2 )
-	-- elseif lives == 0 then
-		-- display.remove( hearsBar3 )
-		-- display.remove( hearsBar2 )
-		-- display.remove( hearsBar1 )
-	-- end
+	livesText:setFillColor( 1, 1, 1 )
 	
 	-- coinsBar:addEventListener( "tap", function () native.showAlert( "Как получить монеты", "Монеты выдаются при угадывании фильмов. Ещё их можно получить посмотрев рекламу.", { "Понятно" } ) end )
 end
@@ -576,7 +570,9 @@ local function ChooseSize(stringName)
 		elseif string.len(stringName) > 35*factor then
 			size = 27
 		elseif string.len(stringName) > 30*factor then
-			size = 31 -- 74 и больше надо оставить такой размер
+			size = 30 -- 74 и больше надо оставить такой размер
+		elseif string.len(stringName) > 20*factor then
+			size = 33
 		elseif string.len(stringName) > 10*factor then
 			size = 35
 		elseif string.len(stringName) > 5*factor then
@@ -631,7 +627,7 @@ local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
 	rateUsCounter = rateUsCounter+1
-	if rateUsCounter == 8 and lives == 3 then
+	if rateUsCounter == 1 then
 		-- Проверяем, ставил ли игрок оценку/отзыв
 		local file_rateUs, errorString = io.open( filePathRateUs, "rb" )
 		if file_rateUs then
@@ -805,10 +801,25 @@ end
 -- Получение монет из серой подсказки
 local function grayHints50ButtonEvent( event )
     if ( "ended" == event.phase ) then
+		local goodAlertTitle = goodAlertTitle_Ru
+		local goodAlertBody = goodAlertBody_Ru
+		local goodAlertButton = goodAlertButton_Ru
+		local badAlertTitle = badAlertTitle_Ru
+		local badAlertBody = badAlertBody_Ru
+		local badAlertButton = badAlertButton_Ru
+		if location == "eng" then
+			goodAlertTitle = goodAlertTitle_En
+			goodAlertBody = goodAlertBody_En
+			goodAlertButton = goodAlertButton_En
+			badAlertTitle = badAlertTitle_En
+			badAlertBody = badAlertBody_En
+			badAlertButton = badAlertButton_En
+		end
+		
 		if appodeal.isLoaded( "rewardedVideo" ) then
 			appodeal.show( "rewardedVideo" )
 			timer.performWithDelay( 1000, function()
-			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )			
+			local alert = native.showAlert( goodAlertTitle, goodAlertBody, { goodAlertButton } )			
 			coins = coins+2
 			SaveCoins()
 			hint50Button = widget.newButton(
@@ -832,7 +843,7 @@ local function grayHints50ButtonEvent( event )
 			)			
 			sceneGroup:insert( hint50Button ) end, 1 )
 		else
-			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
+			local alert = native.showAlert( badAlertTitle, badAlertBody, { badAlertButton } )
 		end
 		
     end
@@ -928,15 +939,29 @@ end
 local function plusCoinsButtonEvent( event )
     if ( "ended" == event.phase ) then
 		print("plusCoinsButtonEvent")
+		local goodAlertTitle = goodAlertTitle_Ru
+		local goodAlertBody = goodAlertBody_Ru
+		local goodAlertButton = goodAlertButton_Ru
+		local badAlertTitle = badAlertTitle_Ru
+		local badAlertBody = badAlertBody_Ru
+		local badAlertButton = badAlertButton_Ru
+		if location == "eng" then
+			goodAlertTitle = goodAlertTitle_En
+			goodAlertBody = goodAlertBody_En
+			goodAlertButton = goodAlertButton_En
+			badAlertTitle = badAlertTitle_En
+			badAlertBody = badAlertBody_En
+			badAlertButton = badAlertButton_En
+		end
 		if appodeal.isLoaded( "rewardedVideo" ) then
 			appodeal.show( "rewardedVideo" )
 			timer.performWithDelay( 1000, function()
-			local alert = native.showAlert( goodAlertTitle_Ru, goodAlertBody_Ru, { goodAlertButton_Ru } )
+			local alert = native.showAlert( goodAlertTitle, goodAlertBody, { goodAlertButton } )
 			coins = coins+2
 			SaveCoins()
 			UpdateHints() end, 1 )		
 		else
-			local alert = native.showAlert( badAlertTitle_Ru, badAlertBody_Ru, { badAlertButton_Ru } )
+			local alert = native.showAlert( badAlertTitle, badAlertBody, { badAlertButton } )
 		end
 		
     end
@@ -991,15 +1016,15 @@ function scene:create( event )
 	pictureFilm.x = display.contentCenterX
 	pictureFilm.y = display.contentCenterY/2+130
 	
-	local scoreBar = display.newImageRect( sceneGroup, "interface/game/button_green.png", display.contentCenterX/2+100, 100 )
+	local scoreBar = display.newImageRect( sceneGroup, "interface/game/button_greenTouch.png", display.contentCenterX/2+100, 115 )
 	scoreBar.x = display.contentCenterX/2
-	scoreBar.y = 100
-	scoreBar.alpha = 0.75
+	scoreBar.y = 105
+	scoreBar.alpha = 0.8
 	
-	local livesBar = display.newImageRect( sceneGroup, "interface/game/button_free.png", display.contentCenterX/2+100, 100 )
+	local livesBar = display.newImageRect( sceneGroup, "interface/game/button_touch.png", display.contentCenterX/2+100, 115 )
 	livesBar.x = display.contentCenterX+display.contentCenterX/2
-	livesBar.y = 100
-	livesBar.alpha = 0.75
+	livesBar.y = 105
+	livesBar.alpha = 0.8
 	
 	UpdateBar()
 	
