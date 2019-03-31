@@ -602,6 +602,7 @@ end
 -- проверяем, хватает ли жизней для дальнейшей игры
 local function checkLives()
 	if lives <= 0 then
+		composer.setVariable( "finalScore", score )
 		composer.removeScene( "game" )
 		composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
 	else
@@ -613,7 +614,6 @@ end
 local function endGame()
 	print( "Неправильно!")
 	appodeal.hide( "banner" )
-	composer.setVariable( "finalScore", score )
 	if adCounter >= 5 then
 		appodeal.show( "interstitial")
 		timer.performWithDelay( 1000, checkLives, 1 )
@@ -627,7 +627,7 @@ local function continueGame()
 	composer.setVariable( "finalScore", score )
 	adCounter = adCounter+1
 	rateUsCounter = rateUsCounter+1
-	if rateUsCounter == 1 then
+	if rateUsCounter == 18 then
 		-- Проверяем, ставил ли игрок оценку/отзыв
 		local file_rateUs, errorString = io.open( filePathRateUs, "rb" )
 		if file_rateUs then
