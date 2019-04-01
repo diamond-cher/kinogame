@@ -13,6 +13,7 @@ local playButtonPress
 local title
 local languageButton
 local languageButtonText = "English"
+local sceneCount = 0
 
 local playButton_Eng = "interface/menu/button_Play_free_Eng.png"
 local playButtonPress_Eng = "interface/menu/button_Play_press_Eng.png"
@@ -151,6 +152,22 @@ local function ChangeLanguage()
 	composer.removeScene( "menu", true )
 	composer.gotoScene( "menu" )
 end
+
+-- обработка кнопки "Назад"
+function KeyBack(event)
+
+    if ( event.keyName == "back" and event.phase == "up" ) then
+		local currScene = composer.getSceneName( "current" )
+		if currScene == "game" or currScene == "highscores" then
+			composer.removeScene( currScene )
+			composer.gotoScene( "menu", { time=500, effect="slideRight" } )
+			return true
+		else
+			native.requestExit()
+			return false
+		end
+    end
+end
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -185,6 +202,7 @@ function scene:create( event )
 	sceneGroup:insert( highScoresButton )
 
 	languageButton:addEventListener( "tap", ChangeLanguage )
+	Runtime:addEventListener( "key", KeyBack )
 	-- playButton:addEventListener( "tap", gotoGame )
 	-- highScoresButton:addEventListener( "tap", gotoHighScores )
 end

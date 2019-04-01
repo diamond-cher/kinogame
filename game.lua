@@ -841,7 +841,24 @@ local function grayHints50ButtonEvent( event )
 					onEvent = hint50ButtonEvent
 				}
 			)			
-			sceneGroup:insert( hint50Button ) end, 1 )
+			hint50Counter = widget.newButton(
+				{
+					x = display.contentCenterX-15,
+					y = display.contentCenterY*1.25-25,
+					width = 50,
+					height = 50,
+					defaultFile = "interface/game/button_circle.png",
+					overFile = "interface/game/button_circle.png",
+					id = "hint50Counter",
+					label = coins,
+					font = native.systemFontBold,
+					fontSize = 40,
+					labelColor = { default = { 0, 0, 0}, over = { 0, 0, 0} },
+					labelAlign = "center",
+				}
+			)
+			sceneGroup:insert( hint50Button )
+			sceneGroup:insert( hint50Counter ) end, 1 )
 		else
 			local alert = native.showAlert( badAlertTitle, badAlertBody, { badAlertButton } )
 		end
@@ -982,6 +999,7 @@ local function adListener( event )
         print( event.response )
     end
 end
+
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
 -- -----------------------------------------------------------------------------------
@@ -1041,7 +1059,7 @@ function scene:create( event )
 				font = native.systemFontBold,
 				label = "+",
 				fontSize = 100,
-				labelYOffset = -4,
+				labelYOffset = -6,
 				labelXOffset = -3,
 				labelColor = { default = { 0.0, 0.0, 0.0}, over = { 0.3, 0.3, 0.3} },
 				labelAlign = "center",
