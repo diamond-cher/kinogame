@@ -34,7 +34,8 @@ local function gotoGame( event )
 		-- отправка события "игрок из меню перешёл в игру"
 		gameanalytics.addProgressionEvent {
 			progressiconStatus = "Complete",
-			progression01 = "menu"
+			progression01 = "levels",
+			progression02 = "menu"
 		}
 		composer.gotoScene( "game", { time=500, effect="slideLeft" } )
     end
@@ -45,7 +46,8 @@ local function gotoHighScores( event )
 		-- отправка события "игрок из меню перешёл не в игру"
 		gameanalytics.addProgressionEvent {
 			progressiconStatus = "Fail",
-			progression01 = "menu"
+			progression01 = "levels",
+			progression02 = "menu"
 		}
 		composer.gotoScene( "highscores", { time=500, effect="slideLeft" } )
     end
@@ -161,7 +163,8 @@ local function ChangeLanguage()
 	-- отправка события "игрок из меню перешёл не в игру"
 	gameanalytics.addProgressionEvent {
 		progressiconStatus = "Fail",
-		progression01 = "menu"
+		progression01 = "levels",
+		progression02 = "menu"
 	}
 	
 	-- перезагружаем сцену
@@ -225,7 +228,8 @@ function scene:create( event )
 	-- отправка события "игрок открыл меню"
 	gameanalytics.addProgressionEvent {
 		progressiconStatus = "Start",
-		progression01 = "menu"
+		progression01 = "levels",
+		progression02 = "menu"
 	}
 end
 

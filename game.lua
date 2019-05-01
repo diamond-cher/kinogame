@@ -31,6 +31,8 @@ local coins
 local used50 = false
 local lives = 3
 local complexity -- сложность уровня
+local levelCount = 0
+local levelText
 
 local scoreText
 local livesText
@@ -47,7 +49,7 @@ local filePathRateUs = system.pathForFile ("rateUs.xml", system.DocumentsDirecto
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
 local adCounter = 0
 local user_id = system.getInfo( "deviceID" )
-local bannerIsShow = false
+local bannerIsShowed = false
 
 -- переменные для текста 
 local goodAlertTitle_Ru = "Поздравляем!"
@@ -333,8 +335,8 @@ local function LoadQuestion()
 	-- Отправка события получения уровня
 	gameanalytics.addProgressionEvent {
 		progressionStatus = "Start",
-		progression01 = "game",
-		progression02 = "level_"..(score+1)
+		progression01 = "levels",
+		progression02 = levelText
 	}
 end
 
@@ -615,6 +617,7 @@ local function checkLives()
 		composer.removeScene( "game" )
 		composer.gotoScene( "highscores", { time=500, effect="slideRight" } )
 	else
+		bannerIsShowed = false
 		composer.removeScene( "game", true )
 		composer.gotoScene( "game" )
 	end
@@ -753,10 +756,9 @@ local function handleButtonEvent( event )
 			-- Отправка события выигрыша уровня
 			gameanalytics.addProgressionEvent {
 				progressionStatus = "Complete",
-				progression01 = "game",
-				progression02 = "level_"..(score+1)
+				progression01 = "levels",
+				progression02 = levelText
 			}
-			gameanalytics.addDesignEvent {eventId = "level:Complete"}
 			score = score+1
 			GenerateGreenButton( buttonLabel )
 			variant1Button:setEnabled(false)
@@ -768,11 +770,10 @@ local function handleButtonEvent( event )
 		else
 			-- Отправка события проигрыша на уровне
 			gameanalytics.addProgressionEvent {
-				progressiconStatus = "Fail",
-				progression01 = "game",
-				progression02 = "level_"..(score+1)
+				progressionStatus = "Fail",
+				progression01 = "levels",
+				progression02 = levelText
 			}
-			gameanalytics.addDesignEvent {eventId = "level:Fail"}
 			lives = lives-1
 			UpdateBar()
 			GenerateRedButton( buttonLabel )
@@ -788,17 +789,17 @@ end
 
 -- логика работы подсказки 50/50
 local function hint50ButtonEvent( event )
-	-- Отправляем событие "игрок запросил подсказку"
-	gameanalytics.addProgressionEvent {
-		progressionStatus = "Start",
-		progression01 = "game",
-		progression02 = "hint50",
-		progression03 = "level_"..(score+1)
-	}
 	local buttonId = event.target.id
 	local deleteButtonl
 	local deleteButton2
     if ( "ended" == event.phase ) then
+		-- Отправляем событие "игрок запросил подсказку"
+		gameanalytics.addProgressionEvent {
+			progressionStatus = "Start",
+			progression01 = "levels",
+			progression02 = "hint50",
+			progression03 = levelText
+		}
 		coins = coins-1
 		SaveCoins()
 		while deleteButtonl == deleteButton2 do
@@ -822,6 +823,13 @@ local function hint50ButtonEvent( event )
 		else
 			display.remove(variant4Button)
 		end
+		-- Отправляем событие "игрок получил подсказку"
+		gameanalytics.addProgressionEvent {
+			progressionStatus = "Complete",
+			progression01 = "levels",
+			progression02 = "hint50",
+			progression03 = levelText
+		}
 		used50 = true
 		UpdateHints()
     end
@@ -1037,6 +1045,17 @@ end
 -- create()
 function scene:create( event )
 
+	-- считаем уровни для аналитики
+	levelCount = levelCount+1
+	if levelCount < 10 then
+		levelText = "level_00"..levelCount
+	elseif levelCount < 100 then
+		levelText = "level_0"..levelCount
+	else
+		levelText = "level_"..levelCount
+	end
+	print(levelText)
+
 	sceneGroup = self.view
 	if composer.getVariable( "finalScore" ) ~= nil then
 		score = composer.getVariable( "finalScore" )
@@ -1187,9 +1206,9 @@ function scene:create( event )
 		-- print("Вариант 4: "..variant4)
 	end
 	appodeal.init( adListener, { appKey=appKey } )
-	if bannerIsShow == false then
+	if bannerIsShowed == false then
 		appodeal.show( "banner", {yAlign="bottom"} )
-		bannerIsShow = true
+		bannerIsShowed = true
 	end
 end
 
