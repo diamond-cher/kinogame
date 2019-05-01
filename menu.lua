@@ -22,8 +22,8 @@ local playButton_Rus = "interface/menu/button_Play_free_Rus.png"
 local playButtonPress_Rus = "interface/menu/button_Play_press_Rus.png"
 local title_Rus = "interface/menu/title_Rus.png"
 
-local languageButtonText_Eng = "English"
-local languageButtonText_Rus = "Русский"
+local languageButtonText_Rus = "English"
+local languageButtonText_Eng = "Русский"
 -- -----------------------------------------------------------------------------------
 -- Code outside of the scene event functions below will only be executed ONCE unless
 -- the scene is removed entirely (not recycled) via "composer.removeScene()"
@@ -31,12 +31,22 @@ local languageButtonText_Rus = "Русский"
 
 local function gotoGame( event )
     if ( "ended" == event.phase ) then
+		-- отправка события "игрок из меню перешёл в игру"
+		gameanalytics.addProgressionEvent {
+			progressiconStatus = "Complete",
+			progression01 = "menu"
+		}
 		composer.gotoScene( "game", { time=500, effect="slideLeft" } )
     end
 end
 
 local function gotoHighScores( event )
     if ( "ended" == event.phase ) then
+		-- отправка события "игрок из меню перешёл не в игру"
+		gameanalytics.addProgressionEvent {
+			progressiconStatus = "Fail",
+			progression01 = "menu"
+		}
 		composer.gotoScene( "highscores", { time=500, effect="slideLeft" } )
     end
 end
@@ -50,7 +60,7 @@ local function CheckLanguage()
 	else
 		file_location = io.open( locationPath, "w" )
 		-- если язык ещё не был выбран, то по умолчанию ставим системный
-		local systemLanguage = system.getPreference( "ui", "language" )	
+		local systemLanguage = system.getPreference( "locale", "language" )	
 		if string.find( systemLanguage, "ru" ) or string.find( systemLanguage, "RU" ) or string.find( systemLanguage, "Ru" ) then
 			location = "rus"
 			file_location:write ("rus")
@@ -148,8 +158,14 @@ local function ChangeLanguage()
 	end
 	file_location:close()
 	
+	-- отправка события "игрок из меню перешёл не в игру"
+	gameanalytics.addProgressionEvent {
+		progressiconStatus = "Fail",
+		progression01 = "menu"
+	}
+	
 	-- перезагружаем сцену
-	composer.removeScene( "menu", true )
+	composer.removeScene( "menu")
 	composer.gotoScene( "menu" )
 end
 
@@ -205,6 +221,12 @@ function scene:create( event )
 	Runtime:addEventListener( "key", KeyBack )
 	-- playButton:addEventListener( "tap", gotoGame )
 	-- highScoresButton:addEventListener( "tap", gotoHighScores )
+	
+	-- отправка события "игрок открыл меню"
+	gameanalytics.addProgressionEvent {
+		progressiconStatus = "Start",
+		progression01 = "menu"
+	}
 end
 
 

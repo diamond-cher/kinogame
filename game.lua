@@ -30,6 +30,7 @@ local score = 0
 local coins
 local used50 = false
 local lives = 3
+local complexity -- сложность уровня
 
 local scoreText
 local livesText
@@ -46,6 +47,7 @@ local filePathRateUs = system.pathForFile ("rateUs.xml", system.DocumentsDirecto
 local appKey = "59a8e580539962fd5a9029b680675ec623d09dea560418f4" -- ключ, который надо будет получить на апподиле после публикации приложения
 local adCounter = 0
 local user_id = system.getInfo( "deviceID" )
+local bannerIsShow = false
 
 -- переменные для текста 
 local goodAlertTitle_Ru = "Поздравляем!"
@@ -67,6 +69,7 @@ local badAlertBody_En = "Perhaps there is no internet. Try to request ads later"
 local badAlertButton_En = "Ok"
 
 local scoreText_En = "Score: "
+
 -- Выбор кадра из фильма и вариантов ответа
 local function LoadQuestion()
 
@@ -76,7 +79,6 @@ local function LoadQuestion()
 	local str -- выбранная строка для работы
 	local i
 	local variant1_tmp, variant2_tmp, variant3_tmp
-	local complexity
 	used50 = false
 	local fixedStarWars = true -- переменная для исправления сраных звёздных войн
 	
@@ -119,17 +121,17 @@ local function LoadQuestion()
 			contents_all[#contents_all+ 1] = line
 		end
 		file_updates, errorString = io.open( filePathUpdates, "w" )
-		print(errorString)
+		-- print(errorString)
 		file_updates:close()
 	end
 	
 	-- определяем сложность скриншота
-	if math.random(1,2) == 1 then
+	if math.random(1,20) > 1 then
 		complexity = "easy"
-		print("Выбранная сложность - "..complexity)
+		-- print("Выбранная сложность - "..complexity)
 	else
 		complexity = "hard"
-		print("Выбранная сложность - "..complexity)
+		-- print("Выбранная сложность - "..complexity)
 	end
 	
 	if complexity == "hard" then
@@ -188,8 +190,8 @@ local function LoadQuestion()
 	
 	-- Отмечаем, что показали выбранный фильм в очередной раз
 	if complexity == "hard" then
-		print("Выбранная строка: "..str)
-		print("Номер строки в файле: "..count[i])
+		-- print("Выбранная строка: "..str)
+		-- print("Номер строки в файле: "..count[i])
 		if str:match ("showed=''") then
 			contents_all[count[i]] = contents_all[count[i]]:gsub("showed=''", "showed='hard1'");
 		elseif str:match ("showed='easy1'") then
@@ -204,8 +206,8 @@ local function LoadQuestion()
 			contents_all[count[i]] = contents_all[count[i]]:gsub("showed='easy1_and_hard2'", "showed='easy2_and_hard2'");
 		end
 	elseif complexity == "easy" then
-		print("Выбранная строка: "..str)
-		print("Номер строки в файле: "..count[i])
+		-- print("Выбранная строка: "..str)
+		-- print("Номер строки в файле: "..count[i])
 		if str:match ("showed=''") then
 			contents_all[count[i]] = contents_all[count[i]]:gsub("showed=''", "showed='easy1'");
 		elseif str:match ("showed='easy1'") then
@@ -222,7 +224,7 @@ local function LoadQuestion()
 	end
 	
 	-- for k,v in pairs( replay_table ) do
-		-- print( "KEY: "..k.." | ".."VALUE: "..v )
+		-- -- print( "KEY: "..k.." | ".."VALUE: "..v )
 	-- end	
 	
 	-- записываем в файл информацию о выбранном варианте
@@ -257,9 +259,9 @@ local function LoadQuestion()
 			variant2_tmp = string.match(contents_all[v2], "name_eng='(.-)'")
 			variant3_tmp = string.match(contents_all[v3], "name_eng='(.-)'")
 		end
-		print("Вариант 1_tmp: "..v1)
-		print("Вариант 2_tmp: "..v2)
-		print("Вариант 3_tmp: "..v3)
+		-- print("Вариант 1_tmp: "..v1)
+		-- print("Вариант 2_tmp: "..v2)
+		-- print("Вариант 3_tmp: "..v3)
 	end
 	
 	-- Определяем, какой кадр будет показан для фильма
@@ -294,10 +296,10 @@ local function LoadQuestion()
 		pictureFilmTrue = "img/"..pictureFilmTrue
 		
 		if nameFilmTrue ~= nil and pictureFilmTrue ~= nil then
-			print("Название правильного фильма: "..nameFilmTrue)
-			print("Путь картинки: "..pictureFilmTrue)
+			-- print("Название правильного фильма: "..nameFilmTrue)
+			-- print("Путь картинки: "..pictureFilmTrue)
 		else
-			print("Название правильного фильма: Что-то пошло не так")
+			-- print("Название правильного фильма: Что-то пошло не так")
 		end
 	end	
 	
@@ -327,6 +329,13 @@ local function LoadQuestion()
 		variant4 = nameFilmTrue
 		numbersFilmFalse = {"variant1", "variant2", "variant3"}
 	end
+	
+	-- Отправка события получения уровня
+	gameanalytics.addProgressionEvent {
+		progressionStatus = "Start",
+		progression01 = "game",
+		progression02 = "level_"..(score+1)
+	}
 end
 
 
@@ -427,7 +436,7 @@ function TableSave(  tbl,filename )
 		   end
 		
 		   if str ~= "" then
-			  print("Хуйпоймичтотакое: "..str)
+			  -- print("Хуйпоймичтотакое: "..str)
 			  stype = type( v )
 			  -- handle value
 			  if stype == "table" then
@@ -452,7 +461,7 @@ end
 
 -- накручиваем очки по тапу по ним (читерская функция)
 local function cheatButton( event )
-	print( "Читер!")
+	-- print( "Читер!")
 	composer.removeScene( "game", true )
 	composer.gotoScene( "game" )
 end
@@ -470,7 +479,7 @@ local function UpdateBar()
 	-- scoreText.anchorX = 0
 	
 	-- читерская прохождение уровня
-	scoreText:addEventListener( "tap", cheatButton )
+	-- scoreText:addEventListener( "tap", cheatButton )
 	
 	local heart = display.newImageRect( sceneGroup, "heart_bar.png", 80, 80 )
 	heart.x = display.contentCenterX+display.contentCenterX/2-50
@@ -493,7 +502,7 @@ local function SplitLongString(stringName)
 		-- если первое слово больше 12 символов, то первый же пробел будет заменён на перенос, иначе - пробел примерно после центра фразы
 		if number_s > 11*factor and count < 30*factor then
 			stringName = stringName:gsub("%s+", "\n", 1)
-			print( "Перенос здесь: " ..number_s )
+			-- print( "Перенос здесь: " ..number_s )
 		else
 			-- ищем середину фразы
 			i = math.floor(count/2)
@@ -501,7 +510,7 @@ local function SplitLongString(stringName)
 			local number_s = stringName:find("%s", i)
 			local revers_number_s = string.find(string.reverse( stringName ), "%s", i)
 			if revers_number_s then
-				print ("Ближайший к середине пробел здесь: "..revers_number_s)
+				-- print ("Ближайший к середине пробел здесь: "..revers_number_s)
 				if number_s then
 					if number_s-i > revers_number_s-i then
 						i = i - revers_number_s-i - 1
@@ -510,7 +519,7 @@ local function SplitLongString(stringName)
 					i = i - revers_number_s-i - 1
 				end
 			end
-			-- print( "Перенос после этого символа: " ..i )
+			-- -- print( "Перенос после этого символа: " ..i )
 			local stringName1 = stringName:sub(1,i-1)
 			local stringName2 = stringName:sub(i)
 			
@@ -532,7 +541,7 @@ local function SplitLongString(stringName)
 		-- чтобы перенесённая и оставшаяся фраза были примерно по центру, добавляем в начало наименьшей части пробелы
 		local number_n = stringName:find("\n")
 		if number_n then
-			-- print( "Нашлась n здесь: "..number_n )
+			-- -- print( "Нашлась n здесь: "..number_n )
 			local stringName1 = stringName:sub(1,number_n-1)
 			local stringName2 = stringName:sub(number_n+1)
 			local symbol_s = " "
@@ -544,14 +553,14 @@ local function SplitLongString(stringName)
 				local difference = string.len(stringName1) - string.len(stringName2)
 				local quantity = math.floor(difference/2)*sectretFactor
 				stringName2 = "\n"..string.rep(symbol_s, quantity)..stringName2
-				print( "Разница между 1 и 2 строками: "..difference )
-				print( "Кол-во пробелов, которое ставим: "..quantity )
+				-- print( "Разница между 1 и 2 строками: "..difference )
+				-- print( "Кол-во пробелов, которое ставим: "..quantity )
 			elseif string.len(stringName1) < string.len(stringName2) then
 				local difference = string.len(stringName2) - string.len(stringName1)
 				local quantity = math.floor(difference/2)*sectretFactor
 				stringName1 = string.rep(symbol_s, quantity)..stringName1.."\n"
-				print( "Разница между 1 и 2 строками: "..difference )
-				print( "Кол-во пробелов, которое ставим: "..quantity )
+				-- print( "Разница между 1 и 2 строками: "..difference )
+				-- print( "Кол-во пробелов, которое ставим: "..quantity )
 			elseif string.len(stringName1) == string.len(stringName2) then
 				stringName1 = stringName1.."\n"
 			end
@@ -595,7 +604,7 @@ local function ChooseSize(stringName)
 			size = 40
 		end
 	end
-	print( 'Размер текста "'..stringName..'" - '..size )
+	-- print( 'Размер текста "'..stringName..'" - '..size )
 	return size
 end
 
@@ -612,7 +621,7 @@ local function checkLives()
 end
 -- Запускается при выборе неправильного ответа
 local function endGame()
-	print( "Неправильно!")
+	-- print( "Неправильно!")
 	appodeal.hide( "banner" )
 	if adCounter >= 5 then
 		appodeal.show( "interstitial")
@@ -632,15 +641,15 @@ local function continueGame()
 		local file_rateUs, errorString = io.open( filePathRateUs, "rb" )
 		if file_rateUs then
 			file_rateUs:close()
-			print( "Правильно!")
+			-- print( "Правильно!")
 			composer.removeScene( "game", true )
 			composer.gotoScene( "game" )
 		else
 			composer.showOverlay( "rate_us" )
-			print( "rate_us!")
+			-- print( "rate_us!")
 		end
 	else
-		print( "Правильно!")
+		-- print( "Правильно!")
 		composer.removeScene( "game", true )
 		composer.gotoScene( "game" )
 	end
@@ -729,7 +738,7 @@ local function handleButtonEvent( event )
 	local buttonId = event.target.id
 	local buttonLabel
     if ( "ended" == event.phase ) then
-        print( "Button was pressed and released "..buttonId )
+        -- print( "Button was pressed and released "..buttonId )
 		if buttonId == "variant1ButtonId" then
 			buttonLabel = variant1
 		elseif buttonId == "variant2ButtonId" then
@@ -741,6 +750,13 @@ local function handleButtonEvent( event )
 		end
 		
 		if buttonLabel == nameFilmTrue then
+			-- Отправка события выигрыша уровня
+			gameanalytics.addProgressionEvent {
+				progressionStatus = "Complete",
+				progression01 = "game",
+				progression02 = "level_"..(score+1)
+			}
+			gameanalytics.addDesignEvent {eventId = "level:Complete"}
 			score = score+1
 			GenerateGreenButton( buttonLabel )
 			variant1Button:setEnabled(false)
@@ -750,6 +766,13 @@ local function handleButtonEvent( event )
 			hint50Button:setEnabled(false)
 			timer.performWithDelay( 1000, continueGame, 1 )
 		else
+			-- Отправка события проигрыша на уровне
+			gameanalytics.addProgressionEvent {
+				progressiconStatus = "Fail",
+				progression01 = "game",
+				progression02 = "level_"..(score+1)
+			}
+			gameanalytics.addDesignEvent {eventId = "level:Fail"}
 			lives = lives-1
 			UpdateBar()
 			GenerateRedButton( buttonLabel )
@@ -763,8 +786,15 @@ local function handleButtonEvent( event )
     end
 end
 
--- логика работы подсказки 50:50
+-- логика работы подсказки 50/50
 local function hint50ButtonEvent( event )
+	-- Отправляем событие "игрок запросил подсказку"
+	gameanalytics.addProgressionEvent {
+		progressionStatus = "Start",
+		progression01 = "game",
+		progression02 = "hint50",
+		progression03 = "level_"..(score+1)
+	}
 	local buttonId = event.target.id
 	local deleteButtonl
 	local deleteButton2
@@ -831,7 +861,7 @@ local function grayHints50ButtonEvent( event )
 					defaultFile = "interface/game/button_green.png",
 					overFile = "interface/game/button_touch.png",
 					id = "hint50Button",
-					label = "50:50",
+					label = "50/50",
 					font = native.systemFontBold,
 					fontSize = 46,
 					labelYOffset = -4,
@@ -866,7 +896,7 @@ local function grayHints50ButtonEvent( event )
     end
 end
 
--- вывод подсказок на экран (пока что только 50:50)
+-- вывод подсказок на экран (пока что только 50/50)
 function UpdateHints()
 	display.remove( hint50Button )
 	if coins > 0 and used50 == false then
@@ -880,7 +910,7 @@ function UpdateHints()
 				defaultFile = "interface/game/button_green.png",
 				overFile = "interface/game/button_greenTouch.png",
 				id = "hint50Button",
-				label = "50:50",
+				label = "50/50",
 				font = native.systemFontBold,
 				fontSize = 46,
 				labelYOffset = -4,
@@ -901,7 +931,7 @@ function UpdateHints()
 				defaultFile = "interface/game/button_green_gray.png",
 				overFile = "interface/game/button_green_gray.png",
 				id = "hint50Button",
-				label = "50:50",
+				label = "50/50",
 				font = native.systemFontBold,
 				fontSize = 46,
 				labelYOffset = -4,
@@ -922,7 +952,7 @@ function UpdateHints()
 				defaultFile = "interface/game/button_green_gray.png",
 				overFile = "interface/game/button_green_gray.png",
 				id = "hint50Button",
-				label = "50:50",
+				label = "50/50",
 				font = native.systemFontBold,
 				fontSize = 46,
 				labelYOffset = -4,
@@ -955,7 +985,7 @@ end
 -- получение монет через просмотр видео
 local function plusCoinsButtonEvent( event )
     if ( "ended" == event.phase ) then
-		print("plusCoinsButtonEvent")
+		-- print("plusCoinsButtonEvent")
 		local goodAlertTitle = goodAlertTitle_Ru
 		local goodAlertBody = goodAlertBody_Ru
 		local goodAlertButton = goodAlertButton_Ru
@@ -994,9 +1024,9 @@ local function adListener( event )
 		appodeal.load( "rewardedVideo" )
 		
     elseif ( event.phase == "failed" ) then  -- The ad failed to load
-        print( event.type )
-        print( event.isError )
-        print( event.response )
+        -- print( event.type )
+        -- print( event.isError )
+        -- print( event.response )
     end
 end
 
@@ -1151,13 +1181,16 @@ function scene:create( event )
 		sceneGroup:insert( variant2Button )
 		sceneGroup:insert( variant3Button )
 		sceneGroup:insert( variant4Button )
-		print("Вариант 1: "..variant1)
-		print("Вариант 2: "..variant2)
-		print("Вариант 3: "..variant3)
-		print("Вариант 4: "..variant4)
+		-- print("Вариант 1: "..variant1)
+		-- print("Вариант 2: "..variant2)
+		-- print("Вариант 3: "..variant3)
+		-- print("Вариант 4: "..variant4)
 	end
 	appodeal.init( adListener, { appKey=appKey } )
-	appodeal.show( "banner", {yAlign="bottom"} )
+	if bannerIsShow == false then
+		appodeal.show( "banner", {yAlign="bottom"} )
+		bannerIsShow = true
+	end
 end
 
 -- show()

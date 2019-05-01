@@ -25,12 +25,14 @@ local rateUs_base
 
 local function tap_buttonGray( event )
     if ( "ended" == event.phase ) then
+		gameanalytics.addDesignEvent {eventId = "rate_us:Later"}
 		composer.hideOverlay( "fade", 400 )
     end
 end
 
 local function tap_buttonGreen( event )
     if ( "ended" == event.phase ) then
+		gameanalytics.addDesignEvent {eventId = "rate_us:Cool"}
 		local options =
 		{
 		   supportedAndroidStores = { "google", "amazon" }
@@ -45,6 +47,7 @@ end
 
 local function tap_buttonRed( event )
     if ( "ended" == event.phase ) then
+		gameanalytics.addDesignEvent {eventId = "rate_us:Bad"}
 		local options =
 		{
 		   to = "i.logic.magic@gmail.com",
@@ -132,6 +135,7 @@ function scene:create( event )
 	sceneGroup:insert( rateUs_buttonGray )
 	sceneGroup:insert( rateUs_buttonGreen )
 	sceneGroup:insert( rateUs_buttonRed )
+	gameanalytics.addDesignEvent {eventId = "rate_us:Show"}
 end
 
 
